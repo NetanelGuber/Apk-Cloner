@@ -1,0 +1,29 @@
+R_DEF: Internal format may change without notice
+local
+color colorAccent
+color colorPrimary
+color colorPrimaryDark
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+id action_refresh
+id action_search
+id appIcon
+id appName
+id cancelButton
+id deepCloneCheckbox
+id doneButton
+id emptyView
+id labelEditText
+id packageName
+id progressBar
+id recyclerView
+id statusText
+id toolbar
+layout activity_clone_progress
+layout activity_main
+layout dialog_clone_settings
+layout item_app
+menu menu_main
+mipmap ic_launcher
+string app_name
+style Theme.APKCloner

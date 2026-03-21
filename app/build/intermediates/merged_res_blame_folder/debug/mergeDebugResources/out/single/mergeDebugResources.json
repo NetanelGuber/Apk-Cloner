@@ -1,0 +1,38 @@
+[
+    {
+        "merged": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-debug-38:\\layout_dialog_clone_settings.xml.flat",
+        "source": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-main-40:\\layout\\dialog_clone_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-debug-38:\\layout_activity_clone_progress.xml.flat",
+        "source": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-main-40:\\layout\\activity_clone_progress.xml"
+    },
+    {
+        "merged": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-debug-38:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-main-40:\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-debug-38:\\drawable_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-main-40:\\drawable\\ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.yourname.apkcloner.app-debug-38:/layout_dialog_clone_settings.xml.flat",
+        "source": "com.yourname.apkcloner.app-main-40:/layout/dialog_clone_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-debug-38:\\drawable_ic_launcher_background.xml.flat",
+        "source": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-main-40:\\drawable\\ic_launcher_background.xml"
+    },
+    {
+        "merged": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-debug-38:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-main-40:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-debug-38:\\menu_menu_main.xml.flat",
+        "source": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-main-40:\\menu\\menu_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-debug-38:\\layout_item_app.xml.flat",
+        "source": "C:\\Users\\Netanel\\.gradle\\daemon\\8.7\\com.yourname.apkcloner.app-main-40:\\layout\\item_app.xml"
+    }
+]

@@ -1,0 +1,348 @@
+-- Merging decision tree log ---
+manifest
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:2:1-42:12
+INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:2:1-42:12
+INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:2:1-42:12
+INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:2:1-42:12
+MERGED from [androidx.databinding:viewbinding:8.4.0] C:\Users\Netanel\.gradle\caches\transforms-4\04531361d0dabc302457a31b2cc317d8\transformed\viewbinding-8.4.0\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.material:material:1.11.0] C:\Users\Netanel\.gradle\caches\transforms-4\37424f8ecfb732cc3eb89f3ad20d81f0\transformed\material-1.11.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\Netanel\.gradle\caches\transforms-4\930631c278e46235a54adbcb8f96a1c1\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\Netanel\.gradle\caches\transforms-4\225fd1d8e339ca93f8064b39f185b3ce\transformed\appcompat-resources-1.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\Netanel\.gradle\caches\transforms-4\e632c3f59a9c4c31bac55933143a31b2\transformed\appcompat-1.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.recyclerview:recyclerview:1.3.2] C:\Users\Netanel\.gradle\caches\transforms-4\7c28d449c0b9a1723c5dbd801b81c9c0\transformed\recyclerview-1.3.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.viewpager2:viewpager2:1.1.0-beta02] C:\Users\Netanel\.gradle\caches\transforms-4\68d04a43f873eadd2260ff4120934ee5\transformed\viewpager2-1.1.0-beta02\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.fragment:fragment:1.3.6] C:\Users\Netanel\.gradle\caches\transforms-4\5540d419d0c85448e1ee33137cc57b43\transformed\fragment-1.3.6\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.activity:activity:1.8.2] C:\Users\Netanel\.gradle\caches\transforms-4\4a67d02f707f8602efc656770f941f48\transformed\activity-1.8.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.activity:activity-ktx:1.8.2] C:\Users\Netanel\.gradle\caches\transforms-4\b8e4534f1e28a6c32ed56e2aae459fc8\transformed\activity-ktx-1.8.2\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\3144e9194cfec471a9140f8708e42053\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:17:1-23:12
+MERGED from [androidx.emoji2:emoji2-views-helper:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\aa210d616252760ff5d19928783fc967\transformed\emoji2-views-helper-1.2.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\684aacc06d374df75353501f8abb6a22\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\Netanel\.gradle\caches\transforms-4\198294e9528a9cf60b6cb22979108318\transformed\savedstate-ktx-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\Netanel\.gradle\caches\transforms-4\ff494fd14f0e73b7280626c381dde591\transformed\savedstate-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\747fddec6ee6104af176ec15736b0d31\transformed\lifecycle-livedata-core-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\eb166c939e69e5f3022bc7f792e0780b\transformed\lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.core:core-ktx:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\e8b7fc4c82a89d82c9060738d64ff3a4\transformed\core-ktx-1.12.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\243c37ba554cc6a0f59e164216acc5c8\transformed\drawerlayout-1.1.1\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\Netanel\.gradle\caches\transforms-4\260a0944b9e601f41eb2cc3b19306474\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\a462ea76fd8e7e3d542525eeaa3745e1\transformed\dynamicanimation-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.transition:transition:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\725f390529a0ac6e3fec00878748938c\transformed\transition-1.2.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\Netanel\.gradle\caches\transforms-4\6b7db57c64573ad810ff991648e31b56\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\Netanel\.gradle\caches\transforms-4\68eba4c45c005f36185d7d2da88fb7a7\transformed\vectordrawable-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\ce4659015657bdbf7268dcc1a31f458a\transformed\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\8f53e12d2d5678aee66023c56afd3f2a\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\fe29661cde17aee1f855b7f48c8e2608\transformed\loader-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\Netanel\.gradle\caches\transforms-4\c50554d948d4bab1d582ed6742c3f56b\transformed\customview-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:17:1-30:12
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\ff5491f4e19a458d5c8975e730bcf552\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\d5f2e3ff38d8a548f2eff4bdea2894d0\transformed\lifecycle-livedata-core-ktx-2.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\f56036af4162a105a95a4845f32fcc04\transformed\lifecycle-livedata-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\bd2a838353d777925218d81c3635b6e3\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\0b7fd1c46f2650a13d5f0863f17dc29b\transformed\lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-ktx:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\383472a92a3ec9e02db4e7361b9f02f3\transformed\lifecycle-livedata-ktx-2.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\e646a425a3e43b0383f81b0934e61639\transformed\lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\44d54832885b1cda6c27bb3b2e331a26\transformed\annotation-experimental-1.3.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\a5397ae2d9e8db92674cd84f60c2a25a\transformed\cursoradapter-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\0694a3fcd967ab735d5c5842caf99698\transformed\cardview-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\861fde9f0d3c1b7fd7072344d605e6f5\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\0a2b40d2ec5fcc0406874058b64fcb68\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\9ff6a600dfd027f4356a7771f23aa796\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\2b12356727af8151eea603e31be8c766\transformed\startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\43c3138e7192980de5580ed22b5be4f2\transformed\tracing-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\0eb497545148073d56bc781951882921\transformed\documentfile-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\7b5253a9c7cd617d3a170d993ec19321\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.print:print:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\5b998c9c5a93b7eba4a822b01c62e4ee\transformed\print-1.0.0\AndroidManifest.xml:17:1-22:12
+	package
+		INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml
+	android:versionName
+		INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml
+	xmlns:tools
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:3:2-48
+	android:versionCode
+		INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:2:11-69
+uses-permission#android.permission.READ_EXTERNAL_STORAGE
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:5:2-77
+	android:name
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:5:19-74
+uses-permission#android.permission.WRITE_EXTERNAL_STORAGE
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:6:2-78
+	android:name
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:6:19-75
+uses-permission#android.permission.REQUEST_INSTALL_PACKAGES
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:7:2-80
+	android:name
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:7:19-77
+uses-permission#android.permission.REQUEST_DELETE_PACKAGES
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:8:2-79
+	android:name
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:8:19-76
+application
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:10:2-40:16
+INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:10:2-40:16
+MERGED from [com.google.android.material:material:1.11.0] C:\Users\Netanel\.gradle\caches\transforms-4\37424f8ecfb732cc3eb89f3ad20d81f0\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
+MERGED from [com.google.android.material:material:1.11.0] C:\Users\Netanel\.gradle\caches\transforms-4\37424f8ecfb732cc3eb89f3ad20d81f0\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\Netanel\.gradle\caches\transforms-4\930631c278e46235a54adbcb8f96a1c1\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\Netanel\.gradle\caches\transforms-4\930631c278e46235a54adbcb8f96a1c1\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
+MERGED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\684aacc06d374df75353501f8abb6a22\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\684aacc06d374df75353501f8abb6a22\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\0a2b40d2ec5fcc0406874058b64fcb68\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\0a2b40d2ec5fcc0406874058b64fcb68\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\2b12356727af8151eea603e31be8c766\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\2b12356727af8151eea603e31be8c766\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+	android:extractNativeLibs
+		INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml
+	android:appComponentFactory
+		ADDED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
+	android:supportsRtl
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:16:3-29
+	android:label
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:13:3-35
+	tools:targetApi
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:17:3-23
+	android:largeHeap
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:14:3-27
+	android:icon
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:12:3-37
+	android:allowBackup
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:11:3-29
+	android:theme
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:15:3-41
+activity#com.yourname.apkcloner.ui.MainActivity
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:19:3-26:14
+	android:exported
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:21:4-27
+	android:name
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:20:4-35
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:22:4-25:20
+action#android.intent.action.MAIN
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:23:5-57
+	android:name
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:23:13-54
+category#android.intent.category.LAUNCHER
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:24:5-65
+	android:name
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:24:15-62
+activity#com.yourname.apkcloner.ui.CloneProgressActivity
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:28:3-30:31
+	android:exported
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:30:4-28
+	android:name
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:29:4-44
+receiver#com.yourname.apkcloner.engine.InstallResultReceiver
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:32:3-38:14
+	android:exported
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:34:4-28
+	android:name
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:33:4-48
+intent-filter#action:name:com.yourname.apkcloner.INSTALL_RESULT
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:35:4-37:20
+action#com.yourname.apkcloner.INSTALL_RESULT
+ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:36:5-68
+	android:name
+		ADDED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml:36:13-65
+uses-sdk
+INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml
+INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml
+MERGED from [androidx.databinding:viewbinding:8.4.0] C:\Users\Netanel\.gradle\caches\transforms-4\04531361d0dabc302457a31b2cc317d8\transformed\viewbinding-8.4.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.databinding:viewbinding:8.4.0] C:\Users\Netanel\.gradle\caches\transforms-4\04531361d0dabc302457a31b2cc317d8\transformed\viewbinding-8.4.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.material:material:1.11.0] C:\Users\Netanel\.gradle\caches\transforms-4\37424f8ecfb732cc3eb89f3ad20d81f0\transformed\material-1.11.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.material:material:1.11.0] C:\Users\Netanel\.gradle\caches\transforms-4\37424f8ecfb732cc3eb89f3ad20d81f0\transformed\material-1.11.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\Netanel\.gradle\caches\transforms-4\930631c278e46235a54adbcb8f96a1c1\transformed\constraintlayout-2.1.4\AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\Netanel\.gradle\caches\transforms-4\930631c278e46235a54adbcb8f96a1c1\transformed\constraintlayout-2.1.4\AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\Netanel\.gradle\caches\transforms-4\225fd1d8e339ca93f8064b39f185b3ce\transformed\appcompat-resources-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\Netanel\.gradle\caches\transforms-4\225fd1d8e339ca93f8064b39f185b3ce\transformed\appcompat-resources-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\Netanel\.gradle\caches\transforms-4\e632c3f59a9c4c31bac55933143a31b2\transformed\appcompat-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\Netanel\.gradle\caches\transforms-4\e632c3f59a9c4c31bac55933143a31b2\transformed\appcompat-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.recyclerview:recyclerview:1.3.2] C:\Users\Netanel\.gradle\caches\transforms-4\7c28d449c0b9a1723c5dbd801b81c9c0\transformed\recyclerview-1.3.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.recyclerview:recyclerview:1.3.2] C:\Users\Netanel\.gradle\caches\transforms-4\7c28d449c0b9a1723c5dbd801b81c9c0\transformed\recyclerview-1.3.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager2:viewpager2:1.1.0-beta02] C:\Users\Netanel\.gradle\caches\transforms-4\68d04a43f873eadd2260ff4120934ee5\transformed\viewpager2-1.1.0-beta02\AndroidManifest.xml:5:5-44
+MERGED from [androidx.viewpager2:viewpager2:1.1.0-beta02] C:\Users\Netanel\.gradle\caches\transforms-4\68d04a43f873eadd2260ff4120934ee5\transformed\viewpager2-1.1.0-beta02\AndroidManifest.xml:5:5-44
+MERGED from [androidx.fragment:fragment:1.3.6] C:\Users\Netanel\.gradle\caches\transforms-4\5540d419d0c85448e1ee33137cc57b43\transformed\fragment-1.3.6\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.3.6] C:\Users\Netanel\.gradle\caches\transforms-4\5540d419d0c85448e1ee33137cc57b43\transformed\fragment-1.3.6\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.activity:activity:1.8.2] C:\Users\Netanel\.gradle\caches\transforms-4\4a67d02f707f8602efc656770f941f48\transformed\activity-1.8.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.8.2] C:\Users\Netanel\.gradle\caches\transforms-4\4a67d02f707f8602efc656770f941f48\transformed\activity-1.8.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity-ktx:1.8.2] C:\Users\Netanel\.gradle\caches\transforms-4\b8e4534f1e28a6c32ed56e2aae459fc8\transformed\activity-ktx-1.8.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-ktx:1.8.2] C:\Users\Netanel\.gradle\caches\transforms-4\b8e4534f1e28a6c32ed56e2aae459fc8\transformed\activity-ktx-1.8.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\3144e9194cfec471a9140f8708e42053\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\3144e9194cfec471a9140f8708e42053\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.emoji2:emoji2-views-helper:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\aa210d616252760ff5d19928783fc967\transformed\emoji2-views-helper-1.2.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\aa210d616252760ff5d19928783fc967\transformed\emoji2-views-helper-1.2.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\684aacc06d374df75353501f8abb6a22\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\684aacc06d374df75353501f8abb6a22\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\Netanel\.gradle\caches\transforms-4\198294e9528a9cf60b6cb22979108318\transformed\savedstate-ktx-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\Netanel\.gradle\caches\transforms-4\198294e9528a9cf60b6cb22979108318\transformed\savedstate-ktx-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\Netanel\.gradle\caches\transforms-4\ff494fd14f0e73b7280626c381dde591\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\Netanel\.gradle\caches\transforms-4\ff494fd14f0e73b7280626c381dde591\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\747fddec6ee6104af176ec15736b0d31\transformed\lifecycle-livedata-core-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\747fddec6ee6104af176ec15736b0d31\transformed\lifecycle-livedata-core-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\eb166c939e69e5f3022bc7f792e0780b\transformed\lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\eb166c939e69e5f3022bc7f792e0780b\transformed\lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core-ktx:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\e8b7fc4c82a89d82c9060738d64ff3a4\transformed\core-ktx-1.12.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-ktx:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\e8b7fc4c82a89d82c9060738d64ff3a4\transformed\core-ktx-1.12.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\243c37ba554cc6a0f59e164216acc5c8\transformed\drawerlayout-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\243c37ba554cc6a0f59e164216acc5c8\transformed\drawerlayout-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\Netanel\.gradle\caches\transforms-4\260a0944b9e601f41eb2cc3b19306474\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\Netanel\.gradle\caches\transforms-4\260a0944b9e601f41eb2cc3b19306474\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\a462ea76fd8e7e3d542525eeaa3745e1\transformed\dynamicanimation-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\a462ea76fd8e7e3d542525eeaa3745e1\transformed\dynamicanimation-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.transition:transition:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\725f390529a0ac6e3fec00878748938c\transformed\transition-1.2.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.transition:transition:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\725f390529a0ac6e3fec00878748938c\transformed\transition-1.2.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\Netanel\.gradle\caches\transforms-4\6b7db57c64573ad810ff991648e31b56\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\Netanel\.gradle\caches\transforms-4\6b7db57c64573ad810ff991648e31b56\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\Netanel\.gradle\caches\transforms-4\68eba4c45c005f36185d7d2da88fb7a7\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\Netanel\.gradle\caches\transforms-4\68eba4c45c005f36185d7d2da88fb7a7\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\ce4659015657bdbf7268dcc1a31f458a\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\ce4659015657bdbf7268dcc1a31f458a\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\8f53e12d2d5678aee66023c56afd3f2a\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\8f53e12d2d5678aee66023c56afd3f2a\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\fe29661cde17aee1f855b7f48c8e2608\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\fe29661cde17aee1f855b7f48c8e2608\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\Netanel\.gradle\caches\transforms-4\c50554d948d4bab1d582ed6742c3f56b\transformed\customview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\Netanel\.gradle\caches\transforms-4\c50554d948d4bab1d582ed6742c3f56b\transformed\customview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\ff5491f4e19a458d5c8975e730bcf552\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\ff5491f4e19a458d5c8975e730bcf552\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\d5f2e3ff38d8a548f2eff4bdea2894d0\transformed\lifecycle-livedata-core-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\d5f2e3ff38d8a548f2eff4bdea2894d0\transformed\lifecycle-livedata-core-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\f56036af4162a105a95a4845f32fcc04\transformed\lifecycle-livedata-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\f56036af4162a105a95a4845f32fcc04\transformed\lifecycle-livedata-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\bd2a838353d777925218d81c3635b6e3\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\bd2a838353d777925218d81c3635b6e3\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\0b7fd1c46f2650a13d5f0863f17dc29b\transformed\lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\0b7fd1c46f2650a13d5f0863f17dc29b\transformed\lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-ktx:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\383472a92a3ec9e02db4e7361b9f02f3\transformed\lifecycle-livedata-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-ktx:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\383472a92a3ec9e02db4e7361b9f02f3\transformed\lifecycle-livedata-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\e646a425a3e43b0383f81b0934e61639\transformed\lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\e646a425a3e43b0383f81b0934e61639\transformed\lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\44d54832885b1cda6c27bb3b2e331a26\transformed\annotation-experimental-1.3.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\44d54832885b1cda6c27bb3b2e331a26\transformed\annotation-experimental-1.3.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\a5397ae2d9e8db92674cd84f60c2a25a\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\a5397ae2d9e8db92674cd84f60c2a25a\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\0694a3fcd967ab735d5c5842caf99698\transformed\cardview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\0694a3fcd967ab735d5c5842caf99698\transformed\cardview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\861fde9f0d3c1b7fd7072344d605e6f5\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\861fde9f0d3c1b7fd7072344d605e6f5\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\0a2b40d2ec5fcc0406874058b64fcb68\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\0a2b40d2ec5fcc0406874058b64fcb68\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\9ff6a600dfd027f4356a7771f23aa796\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\9ff6a600dfd027f4356a7771f23aa796\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\2b12356727af8151eea603e31be8c766\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\2b12356727af8151eea603e31be8c766\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\43c3138e7192980de5580ed22b5be4f2\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\43c3138e7192980de5580ed22b5be4f2\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\0eb497545148073d56bc781951882921\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\0eb497545148073d56bc781951882921\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\7b5253a9c7cd617d3a170d993ec19321\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\7b5253a9c7cd617d3a170d993ec19321\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\5b998c9c5a93b7eba4a822b01c62e4ee\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\Netanel\.gradle\caches\transforms-4\5b998c9c5a93b7eba4a822b01c62e4ee\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+	android:targetSdkVersion
+		INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from C:\Users\Netanel\Downloads\test\apk-cloner\app\src\main\AndroidManifest.xml
+provider#androidx.startup.InitializationProvider
+ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\684aacc06d374df75353501f8abb6a22\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\684aacc06d374df75353501f8abb6a22\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\2b12356727af8151eea603e31be8c766\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Netanel\.gradle\caches\transforms-4\2b12356727af8151eea603e31be8c766\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+	tools:node
+		ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:28:13-31
+	android:authorities
+		ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:26:13-68
+	android:exported
+		ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:27:13-37
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:25:13-67
+meta-data#androidx.emoji2.text.EmojiCompatInitializer
+ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\Netanel\.gradle\caches\transforms-4\10b36402b227a062c2822f2bb018705c\transformed\emoji2-1.2.0\AndroidManifest.xml:30:17-75
+meta-data#androidx.lifecycle.ProcessLifecycleInitializer
+ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\684aacc06d374df75353501f8abb6a22\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\684aacc06d374df75353501f8abb6a22\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Netanel\.gradle\caches\transforms-4\684aacc06d374df75353501f8abb6a22\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:30:17-78
+permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
+permission#com.yourname.apkcloner.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
+uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
+uses-permission#com.yourname.apkcloner.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.12.0] C:\Users\Netanel\.gradle\caches\transforms-4\a37488333647bfcdd8d62a5a48cc6695\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
+meta-data#androidx.profileinstaller.ProfileInstallerInitializer
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+receiver#androidx.profileinstaller.ProfileInstallReceiver
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+	android:enabled
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+	android:permission
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+	android:directBootAware
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+action#androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+action#androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+action#androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+action#androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Netanel\.gradle\caches\transforms-4\7a5869ad3efaf78f1ed94e7fba94f979\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
