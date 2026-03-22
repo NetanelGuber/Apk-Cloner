@@ -6,6 +6,7 @@ import org.jf.dexlib2.Opcodes
 import org.jf.dexlib2.builder.MutableMethodImplementation
 import org.jf.dexlib2.builder.instruction.BuilderInstruction21c
 import org.jf.dexlib2.builder.instruction.BuilderInstruction31c
+import org.jf.dexlib2.iface.Annotation
 import org.jf.dexlib2.iface.ClassDef
 import org.jf.dexlib2.iface.Field
 import org.jf.dexlib2.iface.Method
@@ -15,6 +16,9 @@ import org.jf.dexlib2.iface.instruction.ReferenceInstruction
 import org.jf.dexlib2.iface.reference.StringReference
 import org.jf.dexlib2.iface.value.EncodedValue
 import org.jf.dexlib2.iface.value.StringEncodedValue
+import org.jf.dexlib2.iface.value.TypeEncodedValue
+import org.jf.dexlib2.immutable.ImmutableAnnotation
+import org.jf.dexlib2.immutable.ImmutableAnnotationElement
 import org.jf.dexlib2.immutable.ImmutableClassDef
 import org.jf.dexlib2.immutable.ImmutableDexFile
 import org.jf.dexlib2.immutable.ImmutableField
@@ -22,9 +26,11 @@ import org.jf.dexlib2.immutable.ImmutableMethod
 import org.jf.dexlib2.immutable.ImmutableMethodParameter
 import org.jf.dexlib2.immutable.reference.ImmutableStringReference
 import org.jf.dexlib2.immutable.value.ImmutableStringEncodedValue
+import org.jf.dexlib2.immutable.value.ImmutableTypeEncodedValue
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.util.zip.CRC32
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
@@ -32,38 +38,34 @@ import java.util.zip.ZipOutputStream
 
 class DexPatcher {
 
-	fun patchApk(apkFile: File, oldPackageName: String, newPackageName: String) {
-		val zipFile = ZipFile(apkFile)
-		val dexEntries = zipFile.entries().toList().filter {
-			it.name.matches(Regex("classes\\d*\\.dex"))
-		}
-
-		if (dexEntries.isEmpty()) {
-			zipFile.close()
-			return
-		}
-
+	fun patchApk(apkFile: File, oldPackageName: String, newPackageName: String, minSdk: Int) {
 		val oldPath = oldPackageName.replace('.', '/')
 		val newPath = newPackageName.replace('.', '/')
 		val patchedDexFiles = mutableMapOf<String, File>()
 
 		try {
-			for (entry in dexEntries) {
-				val dexBytes = zipFile.getInputStream(entry).readBytes()
-				val tempDex = File(apkFile.parentFile, "in_${entry.name}")
-				try {
-					tempDex.writeBytes(dexBytes)
-					val outFile = File(apkFile.parentFile, "out_${entry.name}")
-					patchDexFile(tempDex, outFile, oldPackageName, newPackageName, oldPath, newPath)
-					patchedDexFiles[entry.name] = outFile
-				} finally {
-					tempDex.delete()
+			ZipFile(apkFile).use { zipFile ->
+				val dexEntries = zipFile.entries().toList().filter {
+					it.name.matches(Regex("classes\\d*\\.dex"))
 				}
-				// Help GC between large DEX files
-				System.gc()
-			}
+				if (dexEntries.isEmpty()) return
 
-			zipFile.close()
+				for (entry in dexEntries) {
+					val dexBytes = zipFile.getInputStream(entry).readBytes()
+					val tempDex = File(apkFile.parentFile, "in_${entry.name}")
+					try {
+						tempDex.writeBytes(dexBytes)
+						val outFile = File(apkFile.parentFile, "out_${entry.name}")
+						patchDexFile(tempDex, outFile, oldPackageName, newPackageName, oldPath, newPath, minSdk)
+						patchedDexFiles[entry.name] = outFile
+					} finally {
+						tempDex.delete()
+					}
+					// Help GC between large DEX files
+					System.gc()
+				}
+			} // zipFile closed here before replaceDexEntries reopens the file
+
 			replaceDexEntries(apkFile, patchedDexFiles)
 		} finally {
 			patchedDexFiles.values.forEach { it.delete() }
@@ -76,9 +78,10 @@ class DexPatcher {
 		oldPkg: String,
 		newPkg: String,
 		oldPath: String,
-		newPath: String
+		newPath: String,
+		minSdk: Int
 	) {
-		val opcodes = Opcodes.forApi(28)
+		val opcodes = Opcodes.forApi(minSdk)
 		val dex = DexFileFactory.loadDexFile(dexFile, opcodes)
 
 		val patchedClasses = dex.classes.map { classDef ->
@@ -94,22 +97,41 @@ class DexPatcher {
 	}
 
 	private fun classNeedsPatching(classDef: ClassDef, oldPkg: String, oldPath: String): Boolean {
-		if (classDef.type.contains(oldPath)) return true
-		if (classDef.superclass?.contains(oldPath) == true) return true
-		if (classDef.interfaces.any { it.contains(oldPath) }) return true
+		if (typeContainsPath(classDef.type, oldPath)) return true
+		if (classDef.superclass?.let { typeContainsPath(it, oldPath) } == true) return true
+		if (classDef.interfaces.any { typeContainsPath(it, oldPath) }) return true
+		if (annotationsNeedPatching(classDef.annotations, oldPkg, oldPath)) return true
 
 		for (field in classDef.fields) {
-			if (field.type.contains(oldPath)) return true
+			if (typeContainsPath(field.type, oldPath)) return true
 			val init = field.initialValue
 			if (init is StringEncodedValue && (init.value.contains(oldPkg) || init.value.contains(oldPath))) return true
+			if (annotationsNeedPatching(field.annotations, oldPkg, oldPath)) return true
 		}
 
 		for (method in classDef.methods) {
-			if (method.returnType.contains(oldPath)) return true
-			if (method.parameters.any { it.type.contains(oldPath) }) return true
+			if (typeContainsPath(method.returnType, oldPath)) return true
+			if (method.parameters.any { typeContainsPath(it.type, oldPath) }) return true
 			if (methodImplHasMatchingStrings(method.implementation, oldPkg, oldPath)) return true
+			if (annotationsNeedPatching(method.annotations, oldPkg, oldPath)) return true
 		}
 
+		return false
+	}
+
+	private fun annotationsNeedPatching(
+		annotations: Set<Annotation>,
+		oldPkg: String,
+		oldPath: String
+	): Boolean {
+		for (ann in annotations) {
+			if (typeContainsPath(ann.type, oldPath)) return true
+			for (elem in ann.elements) {
+				val v = elem.value
+				if (v is StringEncodedValue && (v.value.contains(oldPkg) || v.value.contains(oldPath))) return true
+				if (v is TypeEncodedValue && typeContainsPath(v.value, oldPath)) return true
+			}
+		}
 		return false
 	}
 
@@ -151,7 +173,7 @@ class DexPatcher {
 			newSuperclass,
 			newInterfaces,
 			classDef.sourceFile,
-			classDef.annotations,
+			patchAnnotations(classDef.annotations, oldPkg, newPkg, oldPath, newPath),
 			newStaticFields,
 			newInstanceFields,
 			newDirectMethods,
@@ -169,6 +191,11 @@ class DexPatcher {
 		val newDefiningClass = rewriteType(field.definingClass, oldPath, newPath)
 		val newFieldType = rewriteType(field.type, oldPath, newPath)
 		val newInitialValue = field.initialValue?.let { patchEncodedValue(it, oldPkg, newPkg, oldPath, newPath) }
+		val newAnnotations = if (annotationsNeedPatching(field.annotations, oldPkg, oldPath)) {
+			patchAnnotations(field.annotations, oldPkg, newPkg, oldPath, newPath)
+		} else {
+			field.annotations
+		}
 
 		return ImmutableField(
 			newDefiningClass,
@@ -176,7 +203,7 @@ class DexPatcher {
 			newFieldType,
 			field.accessFlags,
 			newInitialValue,
-			field.annotations,
+			newAnnotations,
 			field.hiddenApiRestrictions
 		)
 	}
@@ -199,6 +226,40 @@ class DexPatcher {
 		return value
 	}
 
+	private fun patchAnnotations(
+		annotations: Set<Annotation>,
+		oldPkg: String,
+		newPkg: String,
+		oldPath: String,
+		newPath: String
+	): Set<ImmutableAnnotation> {
+		return annotations.map { ann ->
+			val newType = rewriteType(ann.type, oldPath, newPath)
+			val newElems = ann.elements.map { elem ->
+				val origVal = elem.value
+				when {
+					origVal is StringEncodedValue &&
+							(origVal.value.contains(oldPkg) || origVal.value.contains(oldPath)) ->
+						ImmutableAnnotationElement(
+							elem.name,
+							ImmutableStringEncodedValue(
+								origVal.value.replace(oldPkg, newPkg).replace(oldPath, newPath)
+							)
+						)
+					origVal is TypeEncodedValue -> {
+						val rewritten = rewriteType(origVal.value, oldPath, newPath)
+						if (rewritten != origVal.value)
+							ImmutableAnnotationElement(elem.name, ImmutableTypeEncodedValue(rewritten))
+						else
+							ImmutableAnnotationElement.of(elem)
+					}
+					else -> ImmutableAnnotationElement.of(elem)
+				}
+			}
+			ImmutableAnnotation(ann.visibility, newType, newElems)
+		}.toSet()
+	}
+
 	private fun patchMethod(
 		method: Method,
 		oldPkg: String,
@@ -206,12 +267,13 @@ class DexPatcher {
 		oldPath: String,
 		newPath: String
 	): Method {
-		val defNeedsRewrite = method.definingClass.contains(oldPath)
-		val retNeedsRewrite = method.returnType.contains(oldPath)
-		val paramsNeedRewrite = method.parameters.any { it.type.contains(oldPath) }
+		val defNeedsRewrite = typeContainsPath(method.definingClass, oldPath)
+		val retNeedsRewrite = typeContainsPath(method.returnType, oldPath)
+		val paramsNeedRewrite = method.parameters.any { typeContainsPath(it.type, oldPath) }
 		val implNeedsPatching = methodImplHasMatchingStrings(method.implementation, oldPkg, oldPath)
+		val annNeedsPatching = annotationsNeedPatching(method.annotations, oldPkg, oldPath)
 
-		if (!defNeedsRewrite && !retNeedsRewrite && !paramsNeedRewrite && !implNeedsPatching) {
+		if (!defNeedsRewrite && !retNeedsRewrite && !paramsNeedRewrite && !implNeedsPatching && !annNeedsPatching) {
 			return method
 		}
 
@@ -229,6 +291,11 @@ class DexPatcher {
 		} else {
 			method.implementation
 		}
+		val newAnnotations = if (annNeedsPatching) {
+			patchAnnotations(method.annotations, oldPkg, newPkg, oldPath, newPath)
+		} else {
+			method.annotations
+		}
 
 		return ImmutableMethod(
 			newDefiningClass,
@@ -236,7 +303,7 @@ class DexPatcher {
 			newParams,
 			newReturnType,
 			method.accessFlags,
-			method.annotations,
+			newAnnotations,
 			method.hiddenApiRestrictions,
 			newImpl
 		)
@@ -276,12 +343,34 @@ class DexPatcher {
 		return mutableImpl
 	}
 
-	private fun rewriteType(type: String, oldPath: String, newPath: String): String {
-		return if (type.contains(oldPath)) {
-			type.replace(oldPath, newPath)
-		} else {
-			type
+	// Boundary-aware type descriptor match: oldPath must be preceded by L or /
+	// and followed by / or ; to avoid matching library package prefixes (BUG-2).
+	private fun typeContainsPath(type: String, path: String): Boolean {
+		var idx = type.indexOf(path)
+		while (idx >= 0) {
+			val before = if (idx > 0) type[idx - 1] else null
+			val after = type.getOrNull(idx + path.length)
+			if ((before == 'L' || before == '/') && (after == '/' || after == ';')) return true
+			idx = type.indexOf(path, idx + 1)
 		}
+		return false
+	}
+
+	private fun rewriteType(type: String, oldPath: String, newPath: String): String {
+		val sb = StringBuilder()
+		var idx = type.indexOf(oldPath)
+		var last = 0
+		while (idx >= 0) {
+			val before = if (idx > 0) type[idx - 1] else null
+			val after = type.getOrNull(idx + oldPath.length)
+			if ((before == 'L' || before == '/') && (after == '/' || after == ';')) {
+				sb.append(type, last, idx).append(newPath)
+				last = idx + oldPath.length
+			}
+			idx = type.indexOf(oldPath, idx + 1)
+		}
+		sb.append(type, last, type.length)
+		return sb.toString()
 	}
 
 	private fun replaceDexEntries(apkFile: File, patchedDexFiles: Map<String, File>) {
@@ -300,11 +389,16 @@ class DexPatcher {
 					}
 
 					if (patchedDexFiles.containsKey(name)) {
-						val patchedFile = patchedDexFiles[name]!!
+						// DEX files must be STORED (uncompressed) for ART memory-mapping (BUG-10)
+						val patchedBytes = patchedDexFiles[name]!!.readBytes()
+						val crc = CRC32().also { it.update(patchedBytes) }
 						val newEntry = ZipEntry(name)
-						newEntry.method = ZipEntry.DEFLATED
+						newEntry.method = ZipEntry.STORED
+						newEntry.size = patchedBytes.size.toLong()
+						newEntry.compressedSize = patchedBytes.size.toLong()
+						newEntry.crc = crc.value
 						zout.putNextEntry(newEntry)
-						patchedFile.inputStream().buffered().use { it.copyTo(zout) }
+						zout.write(patchedBytes)
 					} else {
 						val newEntry = ZipEntry(name)
 						newEntry.method = entry.method

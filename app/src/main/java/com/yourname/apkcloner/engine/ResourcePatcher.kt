@@ -11,7 +11,6 @@ class ResourcePatcher {
 
 	private companion object {
 		const val TYPE_STRING = 0x03
-		val APP_LABEL_KEYS = setOf("app_name", "application_name", "app_label")
 
 		fun extractArsc(apkFile: File): ByteArray? {
 			ZipFile(apkFile).use { zip ->
@@ -25,7 +24,8 @@ class ResourcePatcher {
 		arscBytes: ByteArray,
 		oldPackageName: String,
 		newPackageName: String,
-		cloneLabel: String?
+		cloneLabel: String?,
+		labelResId: Int? = null
 	): ByteArray {
 		val pkgs = ArscParser(arscBytes).parse()
 
@@ -36,18 +36,21 @@ class ResourcePatcher {
 			}
 
 			// Walk all types → configs → entries → values
-			for (type in pkg.types.values) {
+			// pkg.types is TreeMap<Int, Type> keyed by type ID
+			for ((typeId, type) in pkg.types) {
 				for (config in type.configs) {
-					for ((_, entry) in config.resources) {
-						val specName = entry.spec?.name
+					for ((entryKey, entry) in config.resources) {
+						// Reconstruct the full resource ID to match against manifest label ref (BUG-5)
+						val thisResId = ((pkg.id and 0xFF) shl 24) or ((typeId and 0xFF) shl 16) or (entryKey and 0xFFFF)
+						val isLabelEntry = labelResId != null && thisResId == labelResId
 
 						when (val value = entry.value) {
 							is Value -> {
-								patchValue(value, oldPackageName, newPackageName, cloneLabel, specName)
+								patchValue(value, oldPackageName, newPackageName, cloneLabel, isLabelEntry)
 							}
 							is BagValue -> {
 								for (mapEntry in value.map) {
-									patchValue(mapEntry.value, oldPackageName, newPackageName, cloneLabel, specName)
+									patchValue(mapEntry.value, oldPackageName, newPackageName, cloneLabel, isLabelEntry)
 								}
 							}
 						}
@@ -64,21 +67,21 @@ class ResourcePatcher {
 		oldPkg: String,
 		newPkg: String,
 		cloneLabel: String?,
-		specName: String?
+		isLabelEntry: Boolean
 	) {
 		if (value.type != TYPE_STRING || value.raw == null) return
 
-		val raw = value.raw
-
-		when {
-			// Replace package name occurrences
-			raw.contains(oldPkg) -> {
-				value.raw = raw.replace(oldPkg, newPkg)
-			}
-			// Append clone label to app name strings
-			cloneLabel != null && specName != null && specName in APP_LABEL_KEYS -> {
-				value.raw = "$raw $cloneLabel"
-			}
+		// Apply both operations independently (BUG-6): package substitution and label
+		// appending are sequential steps, not mutually exclusive branches.
+		var updated = value.raw
+		if (updated.contains(oldPkg)) {
+			updated = updated.replace(oldPkg, newPkg)
+		}
+		if (cloneLabel != null && isLabelEntry) {
+			updated = "$updated $cloneLabel"
+		}
+		if (updated != value.raw) {
+			value.raw = updated
 		}
 	}
 

@@ -50,24 +50,29 @@ class ApkInstaller(private val context: Context) {
 		val sessionId = installer.createSession(params)
 		val session = installer.openSession(sessionId)
 
-		session.openWrite("base", 0, signedApk.length()).use { output ->
-			FileInputStream(signedApk).use { input ->
-				input.copyTo(output)
-				session.fsync(output)
+		try {
+			session.openWrite("base", 0, signedApk.length()).use { output ->
+				FileInputStream(signedApk).use { input ->
+					input.copyTo(output)
+					session.fsync(output)
+				}
 			}
-		}
 
-		val intent = Intent(ACTION_INSTALL_RESULT).apply {
-			setPackage(context.packageName)
-			putExtra(EXTRA_PACKAGE, packageName)
-		}
-		val pendingIntent = PendingIntent.getBroadcast(
-			context, sessionId, intent,
-			PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-		)
+			val intent = Intent(ACTION_INSTALL_RESULT).apply {
+				setPackage(context.packageName)
+				putExtra(EXTRA_PACKAGE, packageName)
+			}
+			val pendingIntent = PendingIntent.getBroadcast(
+				context, sessionId, intent,
+				PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+			)
 
-		session.commit(pendingIntent.intentSender)
-		session.close()
+			session.commit(pendingIntent.intentSender)
+			session.close()
+		} catch (e: Exception) {
+			session.abandon()
+			throw e
+		}
 	}
 
 	fun installMultiApk(signedApks: List<File>, packageName: String) {
@@ -86,26 +91,31 @@ class ApkInstaller(private val context: Context) {
 		val sessionId = installer.createSession(params)
 		val session = installer.openSession(sessionId)
 
-		for ((i, apk) in signedApks.withIndex()) {
-			val name = if (i == 0) "base" else "split_$i"
-			session.openWrite(name, 0, apk.length()).use { output ->
-				FileInputStream(apk).use { input ->
-					input.copyTo(output)
-					session.fsync(output)
+		try {
+			for ((i, apk) in signedApks.withIndex()) {
+				val name = if (i == 0) "base" else "split_$i"
+				session.openWrite(name, 0, apk.length()).use { output ->
+					FileInputStream(apk).use { input ->
+						input.copyTo(output)
+						session.fsync(output)
+					}
 				}
 			}
-		}
 
-		val intent = Intent(ACTION_INSTALL_RESULT).apply {
-			setPackage(context.packageName)
-			putExtra(EXTRA_PACKAGE, packageName)
-		}
-		val pendingIntent = PendingIntent.getBroadcast(
-			context, sessionId, intent,
-			PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-		)
+			val intent = Intent(ACTION_INSTALL_RESULT).apply {
+				setPackage(context.packageName)
+				putExtra(EXTRA_PACKAGE, packageName)
+			}
+			val pendingIntent = PendingIntent.getBroadcast(
+				context, sessionId, intent,
+				PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+			)
 
-		session.commit(pendingIntent.intentSender)
-		session.close()
+			session.commit(pendingIntent.intentSender)
+			session.close()
+		} catch (e: Exception) {
+			session.abandon()
+			throw e
+		}
 	}
 }

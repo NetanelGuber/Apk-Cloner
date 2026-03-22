@@ -31,6 +31,7 @@ class CloneProgressActivity : AppCompatActivity() {
 	private lateinit var binding: ActivityCloneProgressBinding
 	private lateinit var viewModel: CloneProgressViewModel
 	private var installReceiver: BroadcastReceiver? = null
+	private var installStarted = false
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -55,6 +56,7 @@ class CloneProgressActivity : AppCompatActivity() {
 
 		viewModel.progress.observe(this) { progress ->
 			binding.progressBar.progress = progress
+			if (progress >= 93) installStarted = true
 		}
 
 		viewModel.error.observe(this) { error ->
@@ -75,7 +77,16 @@ class CloneProgressActivity : AppCompatActivity() {
 		}
 
 		binding.cancelButton.setOnClickListener {
-			finish()
+			if (installStarted) {
+				AlertDialog.Builder(this)
+					.setTitle("Installation in Progress")
+					.setMessage("The installation is already underway and will continue in the background.")
+					.setPositiveButton("OK") { _, _ -> finish() }
+					.setNegativeButton("Stay") { d, _ -> d.dismiss() }
+					.show()
+			} else {
+				finish()
+			}
 		}
 
 		registerInstallReceiver()

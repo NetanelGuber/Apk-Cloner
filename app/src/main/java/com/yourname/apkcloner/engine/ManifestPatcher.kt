@@ -23,25 +23,32 @@ class ManifestPatcher {
 				return zip.getInputStream(entry).readBytes()
 			}
 		}
+
+		data class ManifestPatchResult(val bytes: ByteArray, val labelResourceId: Int?)
 	}
+
+	// Captures the resource ID of android:label when it is a reference (BUG-5)
+	private var capturedLabelResId: Int? = null
 
 	fun patch(
 		manifestBytes: ByteArray,
 		oldPackageName: String,
 		newPackageName: String,
-		cloneLabel: String?
-	): ByteArray {
+		cloneLabel: String?,
+		deepClone: Boolean = false
+	): ManifestPatchResult {
+		capturedLabelResId = null
 		val axml = Axml()
 		val reader = AxmlReader(manifestBytes)
 		reader.accept(axml)
 
 		for (node in axml.firsts) {
-			patchNode(node, oldPackageName, newPackageName, cloneLabel)
+			patchNode(node, oldPackageName, newPackageName, cloneLabel, deepClone)
 		}
 
 		val writer = AxmlWriter()
 		axml.accept(writer)
-		return writer.toByteArray()
+		return ManifestPatchResult(writer.toByteArray(), capturedLabelResId)
 	}
 
 	/**
@@ -61,7 +68,8 @@ class ManifestPatcher {
 		node: Axml.Node,
 		oldPkg: String,
 		newPkg: String,
-		cloneLabel: String?
+		cloneLabel: String?,
+		deepClone: Boolean
 	) {
 		val tagName = node.name ?: ""
 
@@ -81,27 +89,28 @@ class ManifestPatcher {
 					attrsToRemove.add(attr)
 				}
 
-				// Component android:name — resolve to absolute using the OLD
-				// package so it keeps referencing the real class in the DEX.
-				// Do NOT replace the package portion: the class name must stay
-				// unchanged since the DEX bytecode is not renamed.
+				// Component android:name — resolve to absolute. When deepClone,
+				// also update the package portion since DEX classes have been renamed.
 				tagName in COMPONENT_TAGS && attrName == "name" -> {
 					if (attr.type == NodeVisitor.TYPE_STRING && attr.value is String) {
-						attr.value = resolveClassName(attr.value as String, oldPkg)
+						val resolved = resolveClassName(attr.value as String, oldPkg)
+						attr.value = if (deepClone) resolved.replace(oldPkg, newPkg) else resolved
 					}
 				}
 
 				// <activity-alias android:targetActivity="..."> — same treatment
 				tagName == "activity-alias" && attrName == "targetActivity" -> {
 					if (attr.type == NodeVisitor.TYPE_STRING && attr.value is String) {
-						attr.value = resolveClassName(attr.value as String, oldPkg)
+						val resolved = resolveClassName(attr.value as String, oldPkg)
+						attr.value = if (deepClone) resolved.replace(oldPkg, newPkg) else resolved
 					}
 				}
 
 				// <application android:backupAgent="..."> — class reference
 				tagName == "application" && attrName == "backupAgent" -> {
 					if (attr.type == NodeVisitor.TYPE_STRING && attr.value is String) {
-						attr.value = resolveClassName(attr.value as String, oldPkg)
+						val resolved = resolveClassName(attr.value as String, oldPkg)
+						attr.value = if (deepClone) resolved.replace(oldPkg, newPkg) else resolved
 					}
 				}
 
@@ -113,10 +122,18 @@ class ManifestPatcher {
 						.joinToString(";") { it.replace(oldPkg, newPkg) }
 				}
 
-				// <application android:label="..."> — append clone suffix
-				tagName == "application" && attrName == "label" && cloneLabel != null -> {
+				// <application android:label="..."> — always intercept this branch
+				// (BUG-11: no cloneLabel != null condition; prevents fallthrough to
+				// generic handler which would incorrectly mutate a literal label string)
+				tagName == "application" && attrName == "label" -> {
 					if (attr.type == NodeVisitor.TYPE_STRING && attr.value is String) {
-						attr.value = "${attr.value} $cloneLabel"
+						var v = attr.value as String
+						if (v.contains(oldPkg)) v = v.replace(oldPkg, newPkg)
+						if (cloneLabel != null) v = "$v $cloneLabel"
+						attr.value = v
+					} else {
+						// Resource reference — capture the ID for ResourcePatcher (BUG-5)
+						capturedLabelResId = attr.value as? Int
 					}
 				}
 
@@ -136,7 +153,7 @@ class ManifestPatcher {
 
 		// Recurse into children
 		for (child in node.children) {
-			patchNode(child, oldPkg, newPkg, cloneLabel)
+			patchNode(child, oldPkg, newPkg, cloneLabel, deepClone)
 		}
 	}
 }

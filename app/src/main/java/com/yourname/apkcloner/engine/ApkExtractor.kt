@@ -17,8 +17,9 @@ class ApkExtractor(private val context: Context) {
 		File(appInfo.sourceDir).copyTo(destBase, overwrite = true)
 
 		val destSplits = appInfo.splitSourceDirs
-			?.mapIndexed { i, path ->
+			?.mapIndexedNotNull { i, path ->
 				val splitFile = File(path)
+				if (!splitFile.exists() || !splitFile.canRead()) return@mapIndexedNotNull null
 				val dest = File(destDir, "split_$i.apk")
 				splitFile.copyTo(dest, overwrite = true)
 				dest

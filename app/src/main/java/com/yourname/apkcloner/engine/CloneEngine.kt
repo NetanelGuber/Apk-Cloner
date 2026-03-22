@@ -1,6 +1,7 @@
 package com.yourname.apkcloner.engine
 
 import android.content.Context
+import android.os.Build
 import com.yourname.apkcloner.util.FileUtils
 import com.yourname.apkcloner.util.KeystoreUtils
 import java.io.File
@@ -15,27 +16,35 @@ class CloneEngine(private val context: Context) {
 		val workDir = FileUtils.getCloneWorkDir(context, settings.newPackageName)
 
 		try {
+			// ── Step 0: Pre-flight space check (BUG-9: must run before extraction) ──
+			val appInfo = context.packageManager.getApplicationInfo(settings.sourcePackageName, 0)
+			val totalSourceSize = File(appInfo.sourceDir).length() +
+				(appInfo.splitSourceDirs?.sumOf { File(it).length() } ?: 0L)
+			FileUtils.checkAvailableSpace(context, totalSourceSize * 3)
+
+			// Derive minSdk for DEX opcode selection (BUG-14)
+			val minSdk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+				appInfo.minSdkVersion
+			} else {
+				21
+			}
+
 			// ── Step 1: Extract APK ─────────────────────────────────── 10%
 			onProgress("Extracting APK...", 5)
 			val apkSet = ApkExtractor(context).extract(settings.sourcePackageName, workDir)
 			val workingApk = apkSet.baseApk
-
-			// Check available space
-			FileUtils.checkAvailableSpace(
-				context,
-				FileUtils.estimateRequiredSpace(workingApk)
-			)
 			onProgress("APK extracted", 10)
 
 			// ── Step 2: Patch Manifest ───────────────────────────────── 30%
 			onProgress("Patching manifest...", 15)
 			val manifestBytes = extractEntry(workingApk, "AndroidManifest.xml")
 				?: throw IllegalStateException("No AndroidManifest.xml in APK")
-			val patchedManifest = ManifestPatcher().patch(
+			val manifestResult = ManifestPatcher().patch(
 				manifestBytes,
 				settings.sourcePackageName,
 				settings.newPackageName,
-				settings.cloneLabel
+				settings.cloneLabel,
+				settings.deepClone
 			)
 			onProgress("Manifest patched", 30)
 
@@ -47,7 +56,8 @@ class CloneEngine(private val context: Context) {
 					arscBytes,
 					settings.sourcePackageName,
 					settings.newPackageName,
-					settings.cloneLabel
+					settings.cloneLabel,
+					manifestResult.labelResourceId
 				)
 			} else null
 			onProgress("Resources patched", 50)
@@ -58,7 +68,8 @@ class CloneEngine(private val context: Context) {
 				DexPatcher().patchApk(
 					workingApk,
 					settings.sourcePackageName,
-					settings.newPackageName
+					settings.newPackageName,
+					minSdk
 				)
 				onProgress("DEX patched", 65)
 			}
@@ -67,7 +78,7 @@ class CloneEngine(private val context: Context) {
 			onProgress("Assembling APK...", 68)
 			val unsignedApk = File(workDir, "unsigned.apk")
 			ApkAssembler().assemble(
-				workingApk, patchedManifest, patchedArsc, unsignedApk,
+				workingApk, manifestResult.bytes, patchedArsc, unsignedApk,
 				settings.sourcePackageName, settings.newPackageName,
 				settings.patchNativeLibs
 			)
@@ -90,13 +101,24 @@ class CloneEngine(private val context: Context) {
 				val signer = ApkSignerModule()
 
 				for ((i, splitApk) in apkSet.splitApks.withIndex()) {
+					// Patch split DEX files when deep clone is active (BUG-3)
+					if (settings.deepClone) {
+						DexPatcher().patchApk(
+							splitApk,
+							settings.sourcePackageName,
+							settings.newPackageName,
+							minSdk
+						)
+					}
+
 					val unsignedSplit = File(workDir, "unsigned_split_$i.apk")
 					assembler.assembleSplit(
 						splitApk,
 						settings.sourcePackageName,
 						settings.newPackageName,
 						unsignedSplit,
-						settings.patchNativeLibs
+						settings.patchNativeLibs,
+						settings.deepClone
 					)
 
 					val signedSplit = File(workDir, "signed_split_$i.apk")
@@ -117,7 +139,8 @@ class CloneEngine(private val context: Context) {
 			onProgress("Done!", 100)
 
 		} finally {
-			FileUtils.cleanupWorkDir(workDir)
+			// Swallow cleanup exceptions so the original error is not masked (BUG-15)
+			try { FileUtils.cleanupWorkDir(workDir) } catch (_: Exception) { }
 		}
 	}
 

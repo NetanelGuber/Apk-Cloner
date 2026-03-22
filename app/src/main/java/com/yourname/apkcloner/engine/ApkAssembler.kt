@@ -125,7 +125,8 @@ class ApkAssembler {
 		oldPackageName: String,
 		newPackageName: String,
 		destSplitApk: File,
-		patchNativeLibs: Boolean = false
+		patchNativeLibs: Boolean = false,
+		deepClone: Boolean = false
 	) {
 		val xp = XmlResourcePatcher(oldPackageName, newPackageName)
 		val ap = AssetsPatcher(oldPackageName, newPackageName)
@@ -151,8 +152,8 @@ class ApkAssembler {
 						name == "AndroidManifest.xml" -> {
 							val manifestBytes = zin.readBytes()
 							val patchedManifest = ManifestPatcher().patch(
-								manifestBytes, oldPackageName, newPackageName, null
-							)
+								manifestBytes, oldPackageName, newPackageName, null, deepClone
+							).bytes
 							newEntry.method = ZipEntry.DEFLATED
 							zout.putNextEntry(newEntry)
 							zout.write(patchedManifest)

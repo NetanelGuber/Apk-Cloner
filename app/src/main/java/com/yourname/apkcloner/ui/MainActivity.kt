@@ -37,6 +37,7 @@ class MainActivity : AppCompatActivity() {
 	private lateinit var binding: ActivityMainBinding
 	private lateinit var adapter: AppListAdapter
 	private var allApps: List<PackageUtils.AppInfo> = emptyList()
+	private var pendingCloneSettings: CloneSettings? = null
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -175,6 +176,7 @@ class MainActivity : AppCompatActivity() {
 					"Please enable 'Install unknown apps' for APK Cloner",
 					Toast.LENGTH_LONG
 				).show()
+				pendingCloneSettings = settings
 				startActivityForResult(permIntent, REQUEST_INSTALL_PERMISSION)
 				return
 			}
@@ -191,7 +193,13 @@ class MainActivity : AppCompatActivity() {
 		if (requestCode == REQUEST_INSTALL_PERMISSION) {
 			val installer = ApkInstaller(this)
 			if (installer.canInstallPackages()) {
-				Toast.makeText(this, "Permission granted. Select an app to clone.", Toast.LENGTH_SHORT).show()
+				val pending = pendingCloneSettings
+				pendingCloneSettings = null
+				if (pending != null) {
+					startCloning(pending)
+				} else {
+					Toast.makeText(this, "Permission granted. Select an app to clone.", Toast.LENGTH_SHORT).show()
+				}
 			}
 		}
 	}
