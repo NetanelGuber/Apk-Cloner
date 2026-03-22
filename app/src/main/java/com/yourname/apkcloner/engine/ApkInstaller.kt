@@ -45,6 +45,7 @@ class ApkInstaller(private val context: Context) {
 			PackageInstaller.SessionParams.MODE_FULL_INSTALL
 		)
 		params.setAppPackageName(packageName)
+		params.setSize(signedApk.length())
 
 		val sessionId = installer.createSession(params)
 		val session = installer.openSession(sessionId)
