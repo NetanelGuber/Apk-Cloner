@@ -22,7 +22,8 @@ class ApkAssembler {
 		destApk: File,
 		oldPackageName: String? = null,
 		newPackageName: String? = null,
-		patchNativeLibs: Boolean = false
+		patchNativeLibs: Boolean = false,
+		shimDexBytes: ByteArray? = null
 	) {
 		if (oldPackageName != null && newPackageName != null) {
 			xmlPatcher = XmlResourcePatcher(oldPackageName, newPackageName)
@@ -36,6 +37,7 @@ class ApkAssembler {
 		ZipInputStream(FileInputStream(sourceApk).buffered()).use { zin ->
 			ZipOutputStream(FileOutputStream(destApk).buffered()).use { zout ->
 				val seen = mutableSetOf<String>()
+				var dexCount = 0
 				var entry = zin.nextEntry
 				while (entry != null) {
 					val name = entry.name
@@ -45,6 +47,8 @@ class ApkAssembler {
 						entry = zin.nextEntry
 						continue
 					}
+
+					if (name.matches(Regex("classes\\d*\\.dex"))) dexCount++
 
 					val newEntry = ZipEntry(name)
 
@@ -86,6 +90,18 @@ class ApkAssembler {
 					zin.closeEntry()
 					entry = zin.nextEntry
 				}
+
+				if (shimDexBytes != null) {
+					val shimName = if (dexCount == 0) "classes.dex" else "classes${dexCount + 1}.dex"
+					val shimEntry = ZipEntry(shimName)
+					shimEntry.method = ZipEntry.STORED
+					shimEntry.size = shimDexBytes.size.toLong()
+					shimEntry.compressedSize = shimDexBytes.size.toLong()
+					shimEntry.crc = calculateCrc32(shimDexBytes)
+					zout.putNextEntry(shimEntry)
+					zout.write(shimDexBytes)
+					zout.closeEntry()
+				}
 			}
 		}
 	}
@@ -96,7 +112,7 @@ class ApkAssembler {
 		if (xp != null && xp.shouldPatch(name)) {
 			val raw = zin.readBytes()
 			val patched = xp.patch(raw)
-			return patched ?: raw // return raw so caller uses writeRawEntry
+			return patched ?: raw
 		}
 
 		val ap = assetsPatcher
@@ -117,7 +133,7 @@ class ApkAssembler {
 			return nlp.patch(raw) ?: raw
 		}
 
-		return null // no patcher matched, caller does passthrough
+		return null
 	}
 
 	fun assembleSplit(

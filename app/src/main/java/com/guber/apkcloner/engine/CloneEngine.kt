@@ -16,13 +16,12 @@ class CloneEngine(private val context: Context) {
 		val workDir = FileUtils.getCloneWorkDir(context, settings.newPackageName)
 
 		try {
-			// ── Step 0: Pre-flight space check (BUG-9: must run before extraction) ──
+			// ── Step 0: Pre-flight space check ──────────────────────────────────────
 			val appInfo = context.packageManager.getApplicationInfo(settings.sourcePackageName, 0)
 			val totalSourceSize = File(appInfo.sourceDir).length() +
 				(appInfo.splitSourceDirs?.sumOf { File(it).length() } ?: 0L)
 			FileUtils.checkAvailableSpace(context, totalSourceSize * 3)
 
-			// Derive minSdk for DEX opcode selection (BUG-14)
 			val minSdk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 				appInfo.minSdkVersion
 			} else {
@@ -39,12 +38,13 @@ class CloneEngine(private val context: Context) {
 			onProgress("Patching manifest...", 15)
 			val manifestBytes = extractEntry(workingApk, "AndroidManifest.xml")
 				?: throw IllegalStateException("No AndroidManifest.xml in APK")
+			val patchComponentNames = settings.deepClone || settings.dualDex
 			val manifestResult = ManifestPatcher().patch(
 				manifestBytes,
 				settings.sourcePackageName,
 				settings.newPackageName,
 				settings.cloneLabel,
-				settings.deepClone,
+				patchComponentNames,
 				settings.overrideMinSdk,
 				settings.overrideTargetSdk
 			)
@@ -64,16 +64,29 @@ class CloneEngine(private val context: Context) {
 			} else null
 			onProgress("Resources patched", 50)
 
-			// ── Step 4: DEX patching (deep clone) ───────────────────── 65%
-			if (settings.deepClone) {
-				onProgress("Patching DEX (deep clone)...", 55)
-				DexPatcher().patchApk(
-					workingApk,
-					settings.sourcePackageName,
-					settings.newPackageName,
-					minSdk
-				)
-				onProgress("DEX patched", 65)
+			// ── Step 4: DEX work ─────────────────────────────────────── 65%
+			var shimDexBytes: ByteArray? = null
+			when {
+				settings.dualDex -> {
+					onProgress("Generating compatibility shim...", 55)
+					shimDexBytes = DualDexShimGenerator(
+						context,
+						settings.sourcePackageName,
+						settings.newPackageName,
+						minSdk
+					).generate()
+					onProgress("Compatibility shim generated", 65)
+				}
+				settings.deepClone -> {
+					onProgress("Patching DEX (deep clone)...", 55)
+					DexPatcher().patchApk(
+						workingApk,
+						settings.sourcePackageName,
+						settings.newPackageName,
+						minSdk
+					)
+					onProgress("DEX patched", 65)
+				}
 			}
 
 			// ── Step 5: Re-assemble base APK ────────────────────────── 75%
@@ -82,7 +95,7 @@ class CloneEngine(private val context: Context) {
 			ApkAssembler().assemble(
 				workingApk, manifestResult.bytes, patchedArsc, unsignedApk,
 				settings.sourcePackageName, settings.newPackageName,
-				settings.patchNativeLibs
+				settings.patchNativeLibs, shimDexBytes
 			)
 			onProgress("APK assembled", 75)
 
@@ -103,7 +116,6 @@ class CloneEngine(private val context: Context) {
 				val signer = ApkSignerModule()
 
 				for ((i, splitApk) in apkSet.splitApks.withIndex()) {
-					// Patch split DEX files when deep clone is active (BUG-3)
 					if (settings.deepClone) {
 						DexPatcher().patchApk(
 							splitApk,
@@ -120,7 +132,7 @@ class CloneEngine(private val context: Context) {
 						settings.newPackageName,
 						unsignedSplit,
 						settings.patchNativeLibs,
-						settings.deepClone
+						settings.deepClone || settings.dualDex
 					)
 
 					val signedSplit = File(workDir, "signed_split_$i.apk")
@@ -141,7 +153,6 @@ class CloneEngine(private val context: Context) {
 			onProgress("Done!", 100)
 
 		} finally {
-			// Swallow cleanup exceptions so the original error is not masked (BUG-15)
 			try { FileUtils.cleanupWorkDir(workDir) } catch (_: Exception) { }
 		}
 	}

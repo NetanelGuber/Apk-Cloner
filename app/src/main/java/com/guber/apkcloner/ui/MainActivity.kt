@@ -147,6 +147,7 @@ class MainActivity : AppCompatActivity() {
 		val labelEditText = dialogView.findViewById<EditText>(R.id.labelEditText)
 		val deepCloneCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.deepCloneCheckbox)
 		val patchNativeCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.patchNativeCheckbox)
+		val dualDexCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.dualDexCheckbox)
 		val minSdkEditText = dialogView.findViewById<EditText>(R.id.minSdkEditText)
 		val targetSdkEditText = dialogView.findViewById<EditText>(R.id.targetSdkEditText)
 
@@ -171,6 +172,13 @@ class MainActivity : AppCompatActivity() {
 
 		labelEditText.setText("Clone")
 
+		deepCloneCheckbox.setOnCheckedChangeListener { _, isChecked ->
+			if (isChecked) dualDexCheckbox.isChecked = false
+		}
+		dualDexCheckbox.setOnCheckedChangeListener { _, isChecked ->
+			if (isChecked) deepCloneCheckbox.isChecked = false
+		}
+
 		AlertDialog.Builder(this)
 			.setTitle("Clone ${appInfo.label}")
 			.setView(dialogView)
@@ -180,6 +188,7 @@ class MainActivity : AppCompatActivity() {
 					cloneLabel = labelEditText.text.toString().trim()
 						.takeIf { it.isNotEmpty() } ?: "Clone",
 					deepClone = deepCloneCheckbox.isChecked,
+					dualDex = dualDexCheckbox.isChecked,
 					patchNativeLibs = patchNativeCheckbox.isChecked,
 					overrideMinSdk = minSdkEditText.text.toString().trim().toIntOrNull(),
 					overrideTargetSdk = targetSdkEditText.text.toString().trim().toIntOrNull()
