@@ -1,4 +1,4 @@
-package com.yourname.apkcloner.util
+package com.guber.apkcloner.util
 
 import android.content.Context
 import android.os.StatFs

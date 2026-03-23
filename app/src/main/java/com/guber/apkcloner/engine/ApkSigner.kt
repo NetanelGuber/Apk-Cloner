@@ -1,7 +1,7 @@
-package com.yourname.apkcloner.engine
+package com.guber.apkcloner.engine
 
 import com.android.apksig.ApkSigner
-import com.yourname.apkcloner.util.KeystoreUtils
+import com.guber.apkcloner.util.KeystoreUtils
 import java.io.File
 import java.security.PrivateKey
 import java.security.cert.X509Certificate

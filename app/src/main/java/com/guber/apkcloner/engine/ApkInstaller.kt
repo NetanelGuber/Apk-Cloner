@@ -1,4 +1,4 @@
-package com.yourname.apkcloner.engine
+package com.guber.apkcloner.engine
 
 import android.app.PendingIntent
 import android.content.Context
@@ -13,8 +13,8 @@ import java.io.FileInputStream
 class ApkInstaller(private val context: Context) {
 
 	companion object {
-		const val ACTION_INSTALL_RESULT = "com.yourname.apkcloner.INSTALL_RESULT"
-		const val ACTION_INSTALL_STATUS = "com.yourname.apkcloner.INSTALL_STATUS"
+		const val ACTION_INSTALL_RESULT = "com.guber.apkcloner.INSTALL_RESULT"
+		const val ACTION_INSTALL_STATUS = "com.guber.apkcloner.INSTALL_STATUS"
 		const val EXTRA_STATUS = "extra_status"
 		const val EXTRA_PACKAGE = "extra_package"
 	}

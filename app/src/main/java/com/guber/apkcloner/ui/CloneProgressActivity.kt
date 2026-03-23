@@ -1,4 +1,4 @@
-package com.yourname.apkcloner.ui
+package com.guber.apkcloner.ui
 
 import android.content.BroadcastReceiver
 import android.content.ClipData
@@ -16,10 +16,10 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.yourname.apkcloner.databinding.ActivityCloneProgressBinding
-import com.yourname.apkcloner.engine.ApkInstaller
-import com.yourname.apkcloner.engine.CloneEngine
-import com.yourname.apkcloner.engine.CloneSettings
+import com.guber.apkcloner.databinding.ActivityCloneProgressBinding
+import com.guber.apkcloner.engine.ApkInstaller
+import com.guber.apkcloner.engine.CloneEngine
+import com.guber.apkcloner.engine.CloneSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

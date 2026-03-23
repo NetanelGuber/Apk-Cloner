@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-	namespace 'com.yourname.apkcloner'
+	namespace 'com.guber.apkcloner'
 	compileSdk 34
 
 	defaultConfig {
-		applicationId 'com.yourname.apkcloner'
+		applicationId 'com.guber.apkcloner'
 		minSdk 21
 		targetSdk 28
-		versionCode 1
-		versionName '1.0'
+		versionCode 4
+		versionName '0.0.4'
 	}
 
 	buildFeatures {

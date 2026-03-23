@@ -1,9 +1,9 @@
-package com.yourname.apkcloner.engine
+package com.guber.apkcloner.engine
 
 import android.content.Context
 import android.os.Build
-import com.yourname.apkcloner.util.FileUtils
-import com.yourname.apkcloner.util.KeystoreUtils
+import com.guber.apkcloner.util.FileUtils
+import com.guber.apkcloner.util.KeystoreUtils
 import java.io.File
 import java.util.zip.ZipFile
 
@@ -44,7 +44,9 @@ class CloneEngine(private val context: Context) {
 				settings.sourcePackageName,
 				settings.newPackageName,
 				settings.cloneLabel,
-				settings.deepClone
+				settings.deepClone,
+				settings.overrideMinSdk,
+				settings.overrideTargetSdk
 			)
 			onProgress("Manifest patched", 30)
 

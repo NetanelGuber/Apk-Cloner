@@ -1,4 +1,4 @@
-package com.yourname.apkcloner.engine
+package com.guber.apkcloner.engine
 
 import pxb.android.arsc.ArscParser
 import pxb.android.arsc.ArscWriter

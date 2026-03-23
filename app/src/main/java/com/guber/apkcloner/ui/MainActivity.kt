@@ -1,4 +1,4 @@
-package com.yourname.apkcloner.ui
+package com.guber.apkcloner.ui
 
 import android.Manifest
 import android.content.Intent
@@ -9,6 +9,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -18,11 +20,11 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.checkbox.MaterialCheckBox
-import com.yourname.apkcloner.R
-import com.yourname.apkcloner.databinding.ActivityMainBinding
-import com.yourname.apkcloner.engine.ApkInstaller
-import com.yourname.apkcloner.engine.CloneSettings
-import com.yourname.apkcloner.util.PackageUtils
+import com.guber.apkcloner.R
+import com.guber.apkcloner.databinding.ActivityMainBinding
+import com.guber.apkcloner.engine.ApkInstaller
+import com.guber.apkcloner.engine.CloneSettings
+import com.guber.apkcloner.util.PackageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -145,6 +147,27 @@ class MainActivity : AppCompatActivity() {
 		val labelEditText = dialogView.findViewById<EditText>(R.id.labelEditText)
 		val deepCloneCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.deepCloneCheckbox)
 		val patchNativeCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.patchNativeCheckbox)
+		val minSdkEditText = dialogView.findViewById<EditText>(R.id.minSdkEditText)
+		val targetSdkEditText = dialogView.findViewById<EditText>(R.id.targetSdkEditText)
+
+		val compatibilityHeader = dialogView.findViewById<LinearLayout>(R.id.compatibilityHeader)
+		val compatibilityContent = dialogView.findViewById<LinearLayout>(R.id.compatibilityContent)
+		val compatibilityChevron = dialogView.findViewById<TextView>(R.id.compatibilityChevron)
+		val manifestHeader = dialogView.findViewById<LinearLayout>(R.id.manifestHeader)
+		val manifestContent = dialogView.findViewById<LinearLayout>(R.id.manifestContent)
+		val manifestChevron = dialogView.findViewById<TextView>(R.id.manifestChevron)
+
+		compatibilityHeader.setOnClickListener {
+			val expanded = compatibilityContent.visibility == View.VISIBLE
+			compatibilityContent.visibility = if (expanded) View.GONE else View.VISIBLE
+			compatibilityChevron.text = if (expanded) "▸" else "▾"
+		}
+
+		manifestHeader.setOnClickListener {
+			val expanded = manifestContent.visibility == View.VISIBLE
+			manifestContent.visibility = if (expanded) View.GONE else View.VISIBLE
+			manifestChevron.text = if (expanded) "▸" else "▾"
+		}
 
 		labelEditText.setText("Clone")
 
@@ -157,7 +180,9 @@ class MainActivity : AppCompatActivity() {
 					cloneLabel = labelEditText.text.toString().trim()
 						.takeIf { it.isNotEmpty() } ?: "Clone",
 					deepClone = deepCloneCheckbox.isChecked,
-					patchNativeLibs = patchNativeCheckbox.isChecked
+					patchNativeLibs = patchNativeCheckbox.isChecked,
+					overrideMinSdk = minSdkEditText.text.toString().trim().toIntOrNull(),
+					overrideTargetSdk = targetSdkEditText.text.toString().trim().toIntOrNull()
 				)
 				startCloning(settings)
 			}

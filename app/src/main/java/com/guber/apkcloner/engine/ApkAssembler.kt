@@ -1,4 +1,4 @@
-package com.yourname.apkcloner.engine
+package com.guber.apkcloner.engine
 
 import java.io.File
 import java.io.FileInputStream

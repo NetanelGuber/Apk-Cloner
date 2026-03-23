@@ -1,4 +1,4 @@
-package com.yourname.apkcloner.engine
+package com.guber.apkcloner.engine
 
 import pxb.android.axml.Axml
 import pxb.android.axml.AxmlReader
@@ -35,7 +35,9 @@ class ManifestPatcher {
 		oldPackageName: String,
 		newPackageName: String,
 		cloneLabel: String?,
-		deepClone: Boolean = false
+		deepClone: Boolean = false,
+		overrideMinSdk: Int? = null,
+		overrideTargetSdk: Int? = null
 	): ManifestPatchResult {
 		capturedLabelResId = null
 		val axml = Axml()
@@ -43,7 +45,7 @@ class ManifestPatcher {
 		reader.accept(axml)
 
 		for (node in axml.firsts) {
-			patchNode(node, oldPackageName, newPackageName, cloneLabel, deepClone)
+			patchNode(node, oldPackageName, newPackageName, cloneLabel, deepClone, overrideMinSdk, overrideTargetSdk)
 		}
 
 		val writer = AxmlWriter()
@@ -69,7 +71,9 @@ class ManifestPatcher {
 		oldPkg: String,
 		newPkg: String,
 		cloneLabel: String?,
-		deepClone: Boolean
+		deepClone: Boolean,
+		overrideMinSdk: Int? = null,
+		overrideTargetSdk: Int? = null
 	) {
 		val tagName = node.name ?: ""
 
@@ -137,6 +141,15 @@ class ManifestPatcher {
 					}
 				}
 
+				// <uses-sdk android:minSdkVersion="..." android:targetSdkVersion="...">
+				tagName == "uses-sdk" && attrName == "minSdkVersion" && overrideMinSdk != null -> {
+					attr.value = overrideMinSdk
+				}
+
+				tagName == "uses-sdk" && attrName == "targetSdkVersion" && overrideTargetSdk != null -> {
+					attr.value = overrideTargetSdk
+				}
+
 				// Patch any other attribute that contains the old package as a string.
 				// Component class names were already handled above and won't reach here.
 				attr.type == NodeVisitor.TYPE_STRING && attr.value is String -> {
@@ -153,7 +166,7 @@ class ManifestPatcher {
 
 		// Recurse into children
 		for (child in node.children) {
-			patchNode(child, oldPkg, newPkg, cloneLabel, deepClone)
+			patchNode(child, oldPkg, newPkg, cloneLabel, deepClone, overrideMinSdk, overrideTargetSdk)
 		}
 	}
 }

@@ -1,4 +1,4 @@
-package com.yourname.apkcloner.engine
+package com.guber.apkcloner.engine
 
 class NativeLibPatcher(
 	private val oldPkg: String,

@@ -1,12 +1,12 @@
-package com.yourname.apkcloner.ui
+package com.guber.apkcloner.ui
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.yourname.apkcloner.databinding.ItemAppBinding
-import com.yourname.apkcloner.util.PackageUtils
+import com.guber.apkcloner.databinding.ItemAppBinding
+import com.guber.apkcloner.util.PackageUtils
 
 class AppListAdapter(
 	private val onAppClick: (PackageUtils.AppInfo) -> Unit

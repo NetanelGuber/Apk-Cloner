@@ -33,7 +33,7 @@
 			android:name=".engine.InstallResultReceiver"
 			android:exported="false">
 			<intent-filter>
-				<action android:name="com.yourname.apkcloner.INSTALL_RESULT" />
+				<action android:name="com.guber.apkcloner.INSTALL_RESULT" />
 			</intent-filter>
 		</receiver>
 

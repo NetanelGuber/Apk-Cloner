@@ -1,4 +1,4 @@
-package com.yourname.apkcloner.engine
+package com.guber.apkcloner.engine
 
 class AssetsPatcher(
 	private val oldPkg: String,

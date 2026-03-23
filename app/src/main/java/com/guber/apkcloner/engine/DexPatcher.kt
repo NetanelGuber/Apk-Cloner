@@ -1,4 +1,4 @@
-package com.yourname.apkcloner.engine
+package com.guber.apkcloner.engine
 
 import org.jf.dexlib2.DexFileFactory
 import org.jf.dexlib2.Opcode
