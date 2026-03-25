@@ -59,6 +59,10 @@ class MainActivity : AppCompatActivity() {
 		binding.recyclerView.layoutManager = LinearLayoutManager(this)
 		binding.recyclerView.adapter = adapter
 
+		binding.openFileButton.setOnClickListener {
+			openFilePicker()
+		}
+
 		checkPermissionsAndLoad()
 	}
 
@@ -79,10 +83,6 @@ class MainActivity : AppCompatActivity() {
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean {
 		return when (item.itemId) {
-			R.id.action_open_file -> {
-				openFilePicker()
-				true
-			}
 			R.id.action_refresh -> {
 				loadApps()
 				true
@@ -159,7 +159,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun onAppSelected(appInfo: PackageUtils.AppInfo) {
-		showCloneDialog("Clone ${appInfo.label}", appInfo.packageName, null)
+		showCloneDialog("Clone ${appInfo.label}", appInfo.packageName, appInfo.label, null)
 	}
 
 	private fun onFileSelected(uri: Uri) {
@@ -178,6 +178,7 @@ class MainActivity : AppCompatActivity() {
 					showCloneDialog(
 						"Clone ${fileInfo.appLabel}",
 						fileInfo.packageName,
+						fileInfo.appLabel,
 						listOf(fileInfo.baseApkPath) + fileInfo.splitApkPaths
 					)
 				}
@@ -194,7 +195,7 @@ class MainActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun showCloneDialog(title: String, packageName: String, sourceApkPaths: List<String>?) {
+	private fun showCloneDialog(title: String, packageName: String, appLabel: String, sourceApkPaths: List<String>?) {
 		val dialogView = layoutInflater.inflate(R.layout.dialog_clone_settings, null)
 		val labelEditText = dialogView.findViewById<EditText>(R.id.labelEditText)
 		val deepCloneCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.deepCloneCheckbox)
@@ -222,7 +223,7 @@ class MainActivity : AppCompatActivity() {
 			manifestChevron.text = if (expanded) "▸" else "▾"
 		}
 
-		labelEditText.setText("Clone")
+		labelEditText.setText("$appLabel Clone")
 
 		deepCloneCheckbox.setOnCheckedChangeListener { _, isChecked ->
 			if (isChecked) dualDexCheckbox.isChecked = false
@@ -240,7 +241,7 @@ class MainActivity : AppCompatActivity() {
 				val settings = CloneSettings(
 					sourcePackageName = packageName,
 					cloneLabel = labelEditText.text.toString().trim()
-						.takeIf { it.isNotEmpty() } ?: "Clone",
+						.takeIf { it.isNotEmpty() } ?: "$appLabel Clone",
 					deepClone = deepCloneCheckbox.isChecked,
 					dualDex = dualDexCheckbox.isChecked,
 					patchNativeLibs = patchNativeCheckbox.isChecked,

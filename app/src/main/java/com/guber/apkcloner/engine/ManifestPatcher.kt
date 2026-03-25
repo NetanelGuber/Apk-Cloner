@@ -132,8 +132,8 @@ class ManifestPatcher {
 				tagName == "application" && attrName == "label" -> {
 					if (attr.type == NodeVisitor.TYPE_STRING && attr.value is String) {
 						var v = attr.value as String
-						if (v.contains(oldPkg)) v = v.replace(oldPkg, newPkg)
-						if (cloneLabel != null) v = "$v $cloneLabel"
+						if (cloneLabel != null) v = cloneLabel
+						else if (v.contains(oldPkg)) v = v.replace(oldPkg, newPkg)
 						attr.value = v
 					} else {
 						// Resource reference — capture the ID for ResourcePatcher (BUG-5)

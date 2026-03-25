@@ -78,7 +78,7 @@ class ResourcePatcher {
 			updated = updated.replace(oldPkg, newPkg)
 		}
 		if (cloneLabel != null && isLabelEntry) {
-			updated = "$updated $cloneLabel"
+			updated = cloneLabel
 		}
 		if (updated != value.raw) {
 			value.raw = updated

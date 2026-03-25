@@ -16,7 +16,18 @@ data class CloneSettings(
 
 	companion object {
 		fun generateNewPackageName(source: String): String {
-			return "clone.$source"
+			if (source.isEmpty()) return source
+			val lastChar = source.last()
+			val newChar = when {
+				lastChar in 'a'..'y' -> lastChar + 1
+				lastChar == 'z' -> 'a'
+				lastChar in 'A'..'Y' -> lastChar + 1
+				lastChar == 'Z' -> 'A'
+				lastChar in '0'..'8' -> lastChar + 1
+				lastChar == '9' -> '0'
+				else -> 'x'
+			}
+			return source.dropLast(1) + newChar
 		}
 	}
 }
