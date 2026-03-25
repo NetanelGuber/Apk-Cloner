@@ -10,6 +10,11 @@
 		app:actionViewClass="androidx.appcompat.widget.SearchView" />
 
 	<item
+		android:id="@+id/action_open_file"
+		android:title="Open APK File"
+		app:showAsAction="never" />
+
+	<item
 		android:id="@+id/action_refresh"
 		android:title="Refresh"
 		app:showAsAction="never" />

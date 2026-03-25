@@ -16,23 +16,50 @@ class CloneEngine(private val context: Context) {
 		val workDir = FileUtils.getCloneWorkDir(context, settings.newPackageName)
 
 		try {
-			// ── Step 0: Pre-flight space check ──────────────────────────────────────
-			val appInfo = context.packageManager.getApplicationInfo(settings.sourcePackageName, 0)
-			val totalSourceSize = File(appInfo.sourceDir).length() +
-				(appInfo.splitSourceDirs?.sumOf { File(it).length() } ?: 0L)
-			FileUtils.checkAvailableSpace(context, totalSourceSize * 3)
+			// ── Step 0: Pre-flight + Step 1: Acquire APKs ────────────────────────
+			val minSdk: Int
+			val apkSet: ApkExtractor.ApkSet
 
-			val minSdk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-				appInfo.minSdkVersion
+			if (settings.sourceApkPaths != null) {
+				val paths = settings.sourceApkPaths
+				val totalSourceSize = paths.sumOf { File(it).length() }
+				FileUtils.checkAvailableSpace(context, totalSourceSize * 3)
+
+				minSdk = readMinSdkFromApk(File(paths[0]))
+
+				onProgress("Copying APK...", 5)
+				val baseApk = File(paths[0]).copyTo(File(workDir, "base.apk"), overwrite = true)
+				val splitApks = paths.drop(1).mapIndexed { i, path ->
+					File(path).copyTo(File(workDir, "split_$i.apk"), overwrite = true)
+				}
+				apkSet = ApkExtractor.ApkSet(baseApk, splitApks)
+				onProgress("APK copied", 10)
+
+				// Clean up staging files now that they are copied into workDir
+				try {
+					paths.forEach { File(it).delete() }
+					File(paths[0]).parentFile?.delete()
+				} catch (_: Exception) {}
 			} else {
-				21
+				// ── Pre-flight space check ───────────────────────────────────────
+				val appInfo = context.packageManager.getApplicationInfo(settings.sourcePackageName, 0)
+				val totalSourceSize = File(appInfo.sourceDir).length() +
+					(appInfo.splitSourceDirs?.sumOf { File(it).length() } ?: 0L)
+				FileUtils.checkAvailableSpace(context, totalSourceSize * 3)
+
+				minSdk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+					appInfo.minSdkVersion
+				} else {
+					21
+				}
+
+				// ── Step 1: Extract APK ─────────────────────────────────── 10%
+				onProgress("Extracting APK...", 5)
+				apkSet = ApkExtractor(context).extract(settings.sourcePackageName, workDir)
+				onProgress("APK extracted", 10)
 			}
 
-			// ── Step 1: Extract APK ─────────────────────────────────── 10%
-			onProgress("Extracting APK...", 5)
-			val apkSet = ApkExtractor(context).extract(settings.sourcePackageName, workDir)
 			val workingApk = apkSet.baseApk
-			onProgress("APK extracted", 10)
 
 			// ── Step 2: Patch Manifest ───────────────────────────────── 30%
 			onProgress("Patching manifest...", 15)
@@ -73,7 +100,8 @@ class CloneEngine(private val context: Context) {
 						context,
 						settings.sourcePackageName,
 						settings.newPackageName,
-						minSdk
+						minSdk,
+						if (settings.sourceApkPaths != null) workingApk.absolutePath else null
 					).generate()
 					onProgress("Compatibility shim generated", 65)
 				}
@@ -155,6 +183,17 @@ class CloneEngine(private val context: Context) {
 		} finally {
 			try { FileUtils.cleanupWorkDir(workDir) } catch (_: Exception) { }
 		}
+	}
+
+	@Suppress("DEPRECATION")
+	private fun readMinSdkFromApk(apkFile: File): Int {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			try {
+				val pkgInfo = context.packageManager.getPackageArchiveInfo(apkFile.absolutePath, 0)
+				pkgInfo?.applicationInfo?.let { return it.minSdkVersion }
+			} catch (_: Exception) {}
+		}
+		return 21
 	}
 
 	private fun extractEntry(apkFile: File, entryName: String): ByteArray? {

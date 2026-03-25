@@ -19,17 +19,30 @@ class DualDexShimGenerator(
 	private val context: Context,
 	private val oldPackageName: String,
 	private val newPackageName: String,
-	private val minSdk: Int
+	private val minSdk: Int,
+	private val sourceApkPath: String? = null
 ) {
 
+	@Suppress("DEPRECATION")
 	fun generate(): ByteArray? {
 		val pm = context.packageManager
 		val flags = PackageManager.GET_ACTIVITIES or
 			PackageManager.GET_SERVICES or
 			PackageManager.GET_RECEIVERS or
 			PackageManager.GET_PROVIDERS
-		val packageInfo = pm.getPackageInfo(oldPackageName, flags)
-		val appInfo = pm.getApplicationInfo(oldPackageName, 0)
+
+		val packageInfo: android.content.pm.PackageInfo
+		val appInfo: android.content.pm.ApplicationInfo
+
+		if (sourceApkPath != null) {
+			packageInfo = pm.getPackageArchiveInfo(sourceApkPath, flags) ?: return null
+			appInfo = packageInfo.applicationInfo ?: return null
+			appInfo.sourceDir = sourceApkPath
+			appInfo.publicSourceDir = sourceApkPath
+		} else {
+			packageInfo = pm.getPackageInfo(oldPackageName, flags)
+			appInfo = pm.getApplicationInfo(oldPackageName, 0)
+		}
 
 		val prefix = "$oldPackageName."
 		val componentClasses = mutableSetOf<String>()

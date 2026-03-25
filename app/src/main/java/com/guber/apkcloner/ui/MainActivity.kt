@@ -3,6 +3,7 @@ package com.guber.apkcloner.ui
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.Menu
@@ -24,16 +25,19 @@ import com.guber.apkcloner.R
 import com.guber.apkcloner.databinding.ActivityMainBinding
 import com.guber.apkcloner.engine.ApkInstaller
 import com.guber.apkcloner.engine.CloneSettings
+import com.guber.apkcloner.engine.FileApkParser
 import com.guber.apkcloner.util.PackageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
 	companion object {
 		private const val REQUEST_STORAGE_PERMISSION = 100
 		private const val REQUEST_INSTALL_PERMISSION = 101
+		private const val REQUEST_FILE_PICKER = 102
 	}
 
 	private lateinit var binding: ActivityMainBinding
@@ -75,12 +79,24 @@ class MainActivity : AppCompatActivity() {
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean {
 		return when (item.itemId) {
+			R.id.action_open_file -> {
+				openFilePicker()
+				true
+			}
 			R.id.action_refresh -> {
 				loadApps()
 				true
 			}
 			else -> super.onOptionsItemSelected(item)
 		}
+	}
+
+	private fun openFilePicker() {
+		val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+			addCategory(Intent.CATEGORY_OPENABLE)
+			type = "*/*"
+		}
+		startActivityForResult(intent, REQUEST_FILE_PICKER)
 	}
 
 	private fun filterApps(query: String) {
@@ -143,6 +159,42 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun onAppSelected(appInfo: PackageUtils.AppInfo) {
+		showCloneDialog("Clone ${appInfo.label}", appInfo.packageName, null)
+	}
+
+	private fun onFileSelected(uri: Uri) {
+		val progressDialog = AlertDialog.Builder(this)
+			.setTitle("Analyzing file...")
+			.setMessage("Please wait...")
+			.setCancelable(false)
+			.show()
+
+		lifecycleScope.launch(Dispatchers.IO) {
+			try {
+				val stagingDir = File(cacheDir, "import_staging")
+				val fileInfo = FileApkParser(this@MainActivity).parse(uri, stagingDir)
+				withContext(Dispatchers.Main) {
+					progressDialog.dismiss()
+					showCloneDialog(
+						"Clone ${fileInfo.appLabel}",
+						fileInfo.packageName,
+						listOf(fileInfo.baseApkPath) + fileInfo.splitApkPaths
+					)
+				}
+			} catch (e: Exception) {
+				withContext(Dispatchers.Main) {
+					progressDialog.dismiss()
+					AlertDialog.Builder(this@MainActivity)
+						.setTitle("Error")
+						.setMessage("Could not read file: ${e.message}")
+						.setPositiveButton("OK", null)
+						.show()
+				}
+			}
+		}
+	}
+
+	private fun showCloneDialog(title: String, packageName: String, sourceApkPaths: List<String>?) {
 		val dialogView = layoutInflater.inflate(R.layout.dialog_clone_settings, null)
 		val labelEditText = dialogView.findViewById<EditText>(R.id.labelEditText)
 		val deepCloneCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.deepCloneCheckbox)
@@ -179,23 +231,34 @@ class MainActivity : AppCompatActivity() {
 			if (isChecked) deepCloneCheckbox.isChecked = false
 		}
 
+		var cloneStarted = false
 		AlertDialog.Builder(this)
-			.setTitle("Clone ${appInfo.label}")
+			.setTitle(title)
 			.setView(dialogView)
 			.setPositiveButton("Clone") { _, _ ->
+				cloneStarted = true
 				val settings = CloneSettings(
-					sourcePackageName = appInfo.packageName,
+					sourcePackageName = packageName,
 					cloneLabel = labelEditText.text.toString().trim()
 						.takeIf { it.isNotEmpty() } ?: "Clone",
 					deepClone = deepCloneCheckbox.isChecked,
 					dualDex = dualDexCheckbox.isChecked,
 					patchNativeLibs = patchNativeCheckbox.isChecked,
 					overrideMinSdk = minSdkEditText.text.toString().trim().toIntOrNull(),
-					overrideTargetSdk = targetSdkEditText.text.toString().trim().toIntOrNull()
+					overrideTargetSdk = targetSdkEditText.text.toString().trim().toIntOrNull(),
+					sourceApkPaths = sourceApkPaths
 				)
 				startCloning(settings)
 			}
 			.setNegativeButton("Cancel", null)
+			.setOnDismissListener {
+				if (!cloneStarted && sourceApkPaths != null) {
+					try {
+						sourceApkPaths.forEach { File(it).delete() }
+						sourceApkPaths.firstOrNull()?.let { File(it).parentFile?.delete() }
+					} catch (_: Exception) {}
+				}
+			}
 			.show()
 	}
 
@@ -224,15 +287,23 @@ class MainActivity : AppCompatActivity() {
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 		super.onActivityResult(requestCode, resultCode, data)
-		if (requestCode == REQUEST_INSTALL_PERMISSION) {
-			val installer = ApkInstaller(this)
-			if (installer.canInstallPackages()) {
-				val pending = pendingCloneSettings
-				pendingCloneSettings = null
-				if (pending != null) {
-					startCloning(pending)
-				} else {
-					Toast.makeText(this, "Permission granted. Select an app to clone.", Toast.LENGTH_SHORT).show()
+		when (requestCode) {
+			REQUEST_FILE_PICKER -> {
+				val uri = data?.data
+				if (uri != null) {
+					onFileSelected(uri)
+				}
+			}
+			REQUEST_INSTALL_PERMISSION -> {
+				val installer = ApkInstaller(this)
+				if (installer.canInstallPackages()) {
+					val pending = pendingCloneSettings
+					pendingCloneSettings = null
+					if (pending != null) {
+						startCloning(pending)
+					} else {
+						Toast.makeText(this, "Permission granted. Select an app to clone.", Toast.LENGTH_SHORT).show()
+					}
 				}
 			}
 		}

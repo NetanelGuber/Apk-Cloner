@@ -10,7 +10,8 @@ data class CloneSettings(
 	val dualDex: Boolean = false,
 	val patchNativeLibs: Boolean = false,
 	val overrideMinSdk: Int? = null,
-	val overrideTargetSdk: Int? = null
+	val overrideTargetSdk: Int? = null,
+	val sourceApkPaths: List<String>? = null
 ) : Serializable {
 
 	companion object {
