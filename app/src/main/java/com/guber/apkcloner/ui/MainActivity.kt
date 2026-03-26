@@ -15,6 +15,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -66,6 +67,12 @@ class MainActivity : AppCompatActivity() {
 		checkPermissionsAndLoad()
 	}
 
+	override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+		val isDark = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
+		menu.findItem(R.id.action_toggle_dark_mode)?.title = if (isDark) "Light Mode" else "Dark Mode"
+		return super.onPrepareOptionsMenu(menu)
+	}
+
 	override fun onCreateOptionsMenu(menu: Menu): Boolean {
 		menuInflater.inflate(R.menu.menu_main, menu)
 		val searchItem = menu.findItem(R.id.action_search)
@@ -85,6 +92,17 @@ class MainActivity : AppCompatActivity() {
 		return when (item.itemId) {
 			R.id.action_refresh -> {
 				loadApps()
+				true
+			}
+			R.id.action_toggle_dark_mode -> {
+				val current = AppCompatDelegate.getDefaultNightMode()
+				val newMode = if (current == AppCompatDelegate.MODE_NIGHT_YES)
+					AppCompatDelegate.MODE_NIGHT_NO
+				else
+					AppCompatDelegate.MODE_NIGHT_YES
+				getSharedPreferences("app_prefs", MODE_PRIVATE)
+					.edit().putInt("night_mode", newMode).apply()
+				AppCompatDelegate.setDefaultNightMode(newMode)
 				true
 			}
 			else -> super.onOptionsItemSelected(item)

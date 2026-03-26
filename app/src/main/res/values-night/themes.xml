@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<style name="Theme.APKCloner" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-		<item name="colorPrimary">#1976D2</item>
+		<item name="colorPrimary">#90CAF9</item>
 		<item name="colorPrimaryDark">#1565C0</item>
-		<item name="colorAccent">#FF9800</item>
-		<item name="colorOnPrimary">@android:color/white</item>
+		<item name="colorAccent">#FFB74D</item>
+		<item name="colorOnPrimary">@android:color/black</item>
 	</style>
 </resources>
