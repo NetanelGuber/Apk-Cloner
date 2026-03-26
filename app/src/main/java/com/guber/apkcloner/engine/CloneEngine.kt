@@ -73,7 +73,8 @@ class CloneEngine(private val context: Context) {
 				settings.cloneLabel,
 				patchComponentNames,
 				settings.overrideMinSdk,
-				settings.overrideTargetSdk
+				settings.overrideTargetSdk,
+				injectPackageShim = settings.pkgShim
 			)
 			onProgress("Manifest patched", 30)
 
@@ -92,17 +93,28 @@ class CloneEngine(private val context: Context) {
 			onProgress("Resources patched", 50)
 
 			// ── Step 4: DEX work ─────────────────────────────────────── 65%
-			var shimDexBytes: ByteArray? = null
+			val extraDexFiles = mutableListOf<ByteArray>()
+			if (settings.pkgShim) {
+				onProgress("Generating package name shim...", 52)
+				val pkgShimDex = PackageNameShimGenerator(
+					context,
+					settings.sourcePackageName,
+					minSdk,
+					manifestResult.originalApplicationClass
+				).generate()
+				extraDexFiles.add(pkgShimDex)
+			}
 			when {
 				settings.dualDex -> {
 					onProgress("Generating compatibility shim...", 55)
-					shimDexBytes = DualDexShimGenerator(
+					val dualDexBytes = DualDexShimGenerator(
 						context,
 						settings.sourcePackageName,
 						settings.newPackageName,
 						minSdk,
 						if (settings.sourceApkPaths != null) workingApk.absolutePath else null
 					).generate()
+					if (dualDexBytes != null) extraDexFiles.add(dualDexBytes)
 					onProgress("Compatibility shim generated", 65)
 				}
 				settings.deepClone -> {
@@ -123,8 +135,11 @@ class CloneEngine(private val context: Context) {
 			ApkAssembler().assemble(
 				workingApk, manifestResult.bytes, patchedArsc, unsignedApk,
 				settings.sourcePackageName, settings.newPackageName,
-				settings.patchNativeLibs, shimDexBytes
+				settings.patchNativeLibs, extraDexFiles
 			)
+			val alignedApk = File(workDir, "aligned.apk")
+			ZipAligner().align(unsignedApk, alignedApk)
+			unsignedApk.delete()
 			onProgress("APK assembled", 75)
 
 			// ── Step 6: Sign base APK ───────────────────────────────── 85%
@@ -132,7 +147,8 @@ class CloneEngine(private val context: Context) {
 			val signedApk = File(workDir, "signed.apk")
 			val keystoreDir = KeystoreUtils.getKeystoreDir(context)
 			val keystoreFile = File(keystoreDir, "${settings.newPackageName}.jks")
-			ApkSignerModule().sign(unsignedApk, signedApk, keystoreFile)
+			ApkSignerModule().sign(alignedApk, signedApk, keystoreFile)
+			alignedApk.delete()
 			onProgress("APK signed", 85)
 
 			// ── Step 5b/6b: Handle split APKs ───────────────────────── 90%
@@ -163,8 +179,13 @@ class CloneEngine(private val context: Context) {
 						settings.deepClone || settings.dualDex
 					)
 
+					val alignedSplit = File(workDir, "aligned_split_$i.apk")
+					ZipAligner().align(unsignedSplit, alignedSplit)
+					unsignedSplit.delete()
+
 					val signedSplit = File(workDir, "signed_split_$i.apk")
-					signer.sign(unsignedSplit, signedSplit, keystoreFile)
+					signer.sign(alignedSplit, signedSplit, keystoreFile)
+					alignedSplit.delete()
 					allSignedApks.add(signedSplit)
 				}
 				onProgress("Split APKs processed", 90)

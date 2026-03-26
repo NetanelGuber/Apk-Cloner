@@ -9,6 +9,7 @@ data class CloneSettings(
 	val deepClone: Boolean = false,
 	val dualDex: Boolean = false,
 	val patchNativeLibs: Boolean = false,
+	val pkgShim: Boolean = false,
 	val overrideMinSdk: Int? = null,
 	val overrideTargetSdk: Int? = null,
 	val sourceApkPaths: List<String>? = null

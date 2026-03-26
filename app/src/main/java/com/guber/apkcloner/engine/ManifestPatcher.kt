@@ -24,11 +24,17 @@ class ManifestPatcher {
 			}
 		}
 
-		data class ManifestPatchResult(val bytes: ByteArray, val labelResourceId: Int?)
+		data class ManifestPatchResult(
+			val bytes: ByteArray,
+			val labelResourceId: Int?,
+			val originalApplicationClass: String? = null
+		)
 	}
 
 	// Captures the resource ID of android:label when it is a reference (BUG-5)
 	private var capturedLabelResId: Int? = null
+	// Captures the original Application class name before it is replaced by the shim
+	private var capturedAppClass: String? = null
 
 	fun patch(
 		manifestBytes: ByteArray,
@@ -37,20 +43,22 @@ class ManifestPatcher {
 		cloneLabel: String?,
 		deepClone: Boolean = false,
 		overrideMinSdk: Int? = null,
-		overrideTargetSdk: Int? = null
+		overrideTargetSdk: Int? = null,
+		injectPackageShim: Boolean = false
 	): ManifestPatchResult {
 		capturedLabelResId = null
+		capturedAppClass = null
 		val axml = Axml()
 		val reader = AxmlReader(manifestBytes)
 		reader.accept(axml)
 
 		for (node in axml.firsts) {
-			patchNode(node, oldPackageName, newPackageName, cloneLabel, deepClone, overrideMinSdk, overrideTargetSdk)
+			patchNode(node, oldPackageName, newPackageName, cloneLabel, deepClone, injectPackageShim, overrideMinSdk, overrideTargetSdk)
 		}
 
 		val writer = AxmlWriter()
 		axml.accept(writer)
-		return ManifestPatchResult(writer.toByteArray(), capturedLabelResId)
+		return ManifestPatchResult(writer.toByteArray(), capturedLabelResId, capturedAppClass)
 	}
 
 	/**
@@ -72,12 +80,14 @@ class ManifestPatcher {
 		newPkg: String,
 		cloneLabel: String?,
 		deepClone: Boolean,
+		injectPackageShim: Boolean,
 		overrideMinSdk: Int? = null,
 		overrideTargetSdk: Int? = null
 	) {
 		val tagName = node.name ?: ""
 
 		val attrsToRemove = mutableListOf<Axml.Node.Attr>()
+		var foundAppName = false
 
 		for (attr in node.attrs) {
 			val attrName = attr.name ?: continue
@@ -91,6 +101,18 @@ class ManifestPatcher {
 				// Remove sharedUserId to prevent signature mismatch failures
 				tagName == "manifest" && attrName == "sharedUserId" -> {
 					attrsToRemove.add(attr)
+				}
+
+				// <application android:name="..."> with package shim injection —
+				// capture the original class and replace with shim. Must come before
+				// the generic COMPONENT_TAGS handler below.
+				tagName == "application" && attrName == "name" && injectPackageShim -> {
+					foundAppName = true
+					if (attr.type == NodeVisitor.TYPE_STRING && attr.value is String) {
+						val resolved = resolveClassName(attr.value as String, oldPkg)
+						capturedAppClass = if (deepClone) resolved.replace(oldPkg, newPkg) else resolved
+						attr.value = PackageNameShimGenerator.SHIM_CLASS
+					}
 				}
 
 				// Component android:name — resolve to absolute. When deepClone,
@@ -164,9 +186,20 @@ class ManifestPatcher {
 		// Remove marked attributes (sharedUserId)
 		node.attrs.removeAll(attrsToRemove)
 
+		// If the <application> tag has no android:name attribute, inject the shim class
+		if (tagName == "application" && injectPackageShim && !foundAppName) {
+			val nameAttr = Axml.Node.Attr()
+			nameAttr.ns = "http://schemas.android.com/apk/res/android"
+			nameAttr.name = "name"
+			nameAttr.resourceId = 16842755  // android:name = 0x01010003
+			nameAttr.type = NodeVisitor.TYPE_STRING
+			nameAttr.value = PackageNameShimGenerator.SHIM_CLASS
+			node.attrs.add(nameAttr)
+		}
+
 		// Recurse into children
 		for (child in node.children) {
-			patchNode(child, oldPkg, newPkg, cloneLabel, deepClone, overrideMinSdk, overrideTargetSdk)
+			patchNode(child, oldPkg, newPkg, cloneLabel, deepClone, injectPackageShim, overrideMinSdk, overrideTargetSdk)
 		}
 	}
 }

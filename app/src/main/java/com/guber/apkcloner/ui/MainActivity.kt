@@ -201,6 +201,7 @@ class MainActivity : AppCompatActivity() {
 		val deepCloneCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.deepCloneCheckbox)
 		val patchNativeCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.patchNativeCheckbox)
 		val dualDexCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.dualDexCheckbox)
+		val pkgShimCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.pkgShimCheckbox)
 		val minSdkEditText = dialogView.findViewById<EditText>(R.id.minSdkEditText)
 		val targetSdkEditText = dialogView.findViewById<EditText>(R.id.targetSdkEditText)
 
@@ -245,6 +246,7 @@ class MainActivity : AppCompatActivity() {
 					deepClone = deepCloneCheckbox.isChecked,
 					dualDex = dualDexCheckbox.isChecked,
 					patchNativeLibs = patchNativeCheckbox.isChecked,
+					pkgShim = pkgShimCheckbox.isChecked,
 					overrideMinSdk = minSdkEditText.text.toString().trim().toIntOrNull(),
 					overrideTargetSdk = targetSdkEditText.text.toString().trim().toIntOrNull(),
 					sourceApkPaths = sourceApkPaths

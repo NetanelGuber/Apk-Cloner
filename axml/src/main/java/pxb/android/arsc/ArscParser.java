@@ -270,7 +270,7 @@ public class ArscParser implements ResConst {
                 case RES_TABLE_TYPE_TYPE: {
                     D("[%08x]read config", in.position() - 8);
                     int tid = in.get() & 0xFF;
-                    in.get(); // res0
+                    int typeFlags = in.get() & 0xFF; // FLAG_SPARSE=0x01 (API 28+), FLAG_OFFSET16=0x02 (API 31+)
                     in.getShort();// res1
                     int entryCount = in.getInt();
                     Type t = pkg.getType(tid, typeNamesX[tid - 1], entryCount);
@@ -284,22 +284,40 @@ public class ArscParser implements ResConst {
                     byte[] data = new byte[size];
                     in.position(p);
                     in.get(data);
-                    Config config = new Config(data, entryCount);
+                    // For sparse types entryCount = non-null entries, not total type size.
+                    // Use the spec's full size so Config is consistent with specs.
+                    int configEntryCount = (typeFlags & 0x01) != 0 ? t.specs.length : entryCount;
+                    Config config = new Config(data, configEntryCount);
 
                     in.position(chunk.location + chunk.headSize);
 
                     D("[%08x]read config entry offset", in.position());
 
-                    int[] entrys = new int[entryCount];
-                    for (int i = 0; i < entryCount; i++) {
-                        entrys[i] = in.getInt();
-                    }
-                    D("[%08x]read config entrys", in.position());
-                    for (int i = 0; i < entrys.length; i++) {
-                        if (entrys[i] != -1) {
-                            in.position(chunk.location + entriesStart + entrys[i]);
-                            ResSpec spec = t.getSpec(i);
+                    boolean isSparse = (typeFlags & 0x01) != 0;
+                    if (isSparse) {
+                        // Sparse format (API 28+): each slot is ResTable_sparseTypeEntry
+                        // { uint16_t idx; uint16_t offset; } — idx first, then offset.
+                        for (int i = 0; i < entryCount; i++) {
+                            int idx    = in.getShort() & 0xFFFF;
+                            int offset = in.getShort() & 0xFFFF;
+                            int savedPos = in.position();
+                            in.position(chunk.location + entriesStart + offset);
+                            ResSpec spec = t.getSpec(idx);
                             readEntry(config, spec);
+                            in.position(savedPos);
+                        }
+                    } else {
+                        int[] entrys = new int[entryCount];
+                        for (int i = 0; i < entryCount; i++) {
+                            entrys[i] = in.getInt();
+                        }
+                        D("[%08x]read config entrys", in.position());
+                        for (int i = 0; i < entrys.length; i++) {
+                            if (entrys[i] != -1) {
+                                in.position(chunk.location + entriesStart + entrys[i]);
+                                ResSpec spec = t.getSpec(i);
+                                readEntry(config, spec);
+                            }
                         }
                     }
 

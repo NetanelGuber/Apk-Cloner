@@ -23,7 +23,7 @@ class ApkAssembler {
 		oldPackageName: String? = null,
 		newPackageName: String? = null,
 		patchNativeLibs: Boolean = false,
-		shimDexBytes: ByteArray? = null
+		extraDexFiles: List<ByteArray> = emptyList()
 	) {
 		if (oldPackageName != null && newPackageName != null) {
 			xmlPatcher = XmlResourcePatcher(oldPackageName, newPackageName)
@@ -74,6 +74,14 @@ class ApkAssembler {
 							val rawBytes = tryPatchEntry(name, entry, zin)
 							if (rawBytes != null) {
 								writeRawEntry(newEntry, entry, rawBytes, zout)
+							} else if (name.endsWith(".so") && entry.method != ZipEntry.STORED) {
+								val bytes = zin.readBytes()
+								newEntry.method = ZipEntry.STORED
+								newEntry.size = bytes.size.toLong()
+								newEntry.compressedSize = bytes.size.toLong()
+								newEntry.crc = calculateCrc32(bytes)
+								zout.putNextEntry(newEntry)
+								zout.write(bytes)
 							} else {
 								newEntry.method = entry.method
 								if (entry.method == ZipEntry.STORED) {
@@ -91,15 +99,15 @@ class ApkAssembler {
 					entry = zin.nextEntry
 				}
 
-				if (shimDexBytes != null) {
-					val shimName = if (dexCount == 0) "classes.dex" else "classes${dexCount + 1}.dex"
-					val shimEntry = ZipEntry(shimName)
-					shimEntry.method = ZipEntry.STORED
-					shimEntry.size = shimDexBytes.size.toLong()
-					shimEntry.compressedSize = shimDexBytes.size.toLong()
-					shimEntry.crc = calculateCrc32(shimDexBytes)
-					zout.putNextEntry(shimEntry)
-					zout.write(shimDexBytes)
+				for ((i, dexBytes) in extraDexFiles.withIndex()) {
+					val dexName = if (dexCount == 0 && i == 0) "classes.dex" else "classes${dexCount + i + 1}.dex"
+					val dexEntry = ZipEntry(dexName)
+					dexEntry.method = ZipEntry.STORED
+					dexEntry.size = dexBytes.size.toLong()
+					dexEntry.compressedSize = dexBytes.size.toLong()
+					dexEntry.crc = calculateCrc32(dexBytes)
+					zout.putNextEntry(dexEntry)
+					zout.write(dexBytes)
 					zout.closeEntry()
 				}
 			}
@@ -195,14 +203,24 @@ class ApkAssembler {
 							writeRawEntry(newEntry, entry, patched, zout)
 						}
 						else -> {
-							newEntry.method = entry.method
-							if (entry.method == ZipEntry.STORED) {
-								newEntry.size = entry.size
-								newEntry.compressedSize = entry.compressedSize
-								newEntry.crc = entry.crc
+							if (name.endsWith(".so") && entry.method != ZipEntry.STORED) {
+								val bytes = zin.readBytes()
+								newEntry.method = ZipEntry.STORED
+								newEntry.size = bytes.size.toLong()
+								newEntry.compressedSize = bytes.size.toLong()
+								newEntry.crc = calculateCrc32(bytes)
+								zout.putNextEntry(newEntry)
+								zout.write(bytes)
+							} else {
+								newEntry.method = entry.method
+								if (entry.method == ZipEntry.STORED) {
+									newEntry.size = entry.size
+									newEntry.compressedSize = entry.compressedSize
+									newEntry.crc = entry.crc
+								}
+								zout.putNextEntry(newEntry)
+								zin.copyTo(zout)
 							}
-							zout.putNextEntry(newEntry)
-							zin.copyTo(zout)
 						}
 					}
 					zout.closeEntry()
@@ -219,8 +237,10 @@ class ApkAssembler {
 		bytes: ByteArray,
 		zout: ZipOutputStream
 	) {
-		newEntry.method = original.method
-		if (original.method == ZipEntry.STORED) {
+		// .so files must always be stored uncompressed for Android 6+ memory-mapped loading
+		val forceStore = newEntry.name.endsWith(".so")
+		newEntry.method = if (forceStore) ZipEntry.STORED else original.method
+		if (newEntry.method == ZipEntry.STORED) {
 			newEntry.size = bytes.size.toLong()
 			newEntry.compressedSize = bytes.size.toLong()
 			newEntry.crc = calculateCrc32(bytes)

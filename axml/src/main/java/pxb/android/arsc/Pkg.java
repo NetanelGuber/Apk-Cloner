@@ -37,9 +37,14 @@ public class Pkg {
                 } else if (!name.endsWith(type.name)) {
                     throw new RuntimeException();
                 }
-                if (type.specs.length != entrySize) {
-                    throw new RuntimeException();
+                if (entrySize > type.specs.length) {
+                    // Sparse ARSC: a later block declares more entries than the first.
+                    // Grow the specs array and leave new slots null (lazily initialised).
+                    ResSpec[] bigger = new ResSpec[entrySize];
+                    System.arraycopy(type.specs, 0, bigger, 0, type.specs.length);
+                    type.specs = bigger;
                 }
+                // entrySize < type.specs.length is valid: this config simply omits trailing entries.
             }
         } else {
             type = new Type();
