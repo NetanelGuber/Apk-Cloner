@@ -30,7 +30,7 @@ class ApkSignerModule {
 			.setOutputApk(signedApk)
 			.setV1SigningEnabled(true)
 			.setV2SigningEnabled(true)
-			.setV3SigningEnabled(false)
+			.setV3SigningEnabled(true)
 			.setMinSdkVersion(21)
 			.build()
 			.sign()

@@ -22,9 +22,39 @@ class AssetsPatcher(
 		return try {
 			val text = bytes.toString(Charsets.UTF_8)
 			if (!text.contains(oldPkg) && !text.contains(oldPath)) return null
-			text.replace(oldPkg, newPkg).replace(oldPath, newPath).toByteArray(Charsets.UTF_8)
+			val patched = text.replaceBounded(oldPkg, newPkg).replaceBounded(oldPath, newPath)
+			if (patched == text) null else patched.toByteArray(Charsets.UTF_8)
 		} catch (_: Exception) {
 			null
 		}
 	}
+}
+
+/**
+ * Replaces all occurrences of [old] in the receiver string where the character
+ * immediately after the match is NOT alphanumeric and NOT underscore. This prevents
+ * false-positive replacements when [old] is a strict prefix of a longer identifier
+ * (e.g. replacing "com.example.app" must not corrupt "com.example.appcompat").
+ */
+internal fun String.replaceBounded(old: String, new: String): String {
+	if (old.isEmpty() || !contains(old)) return this
+	val sb = StringBuilder(length)
+	var start = 0
+	var idx = indexOf(old, start)
+	while (idx >= 0) {
+		val afterIdx = idx + old.length
+		val afterChar = getOrNull(afterIdx)
+		if (afterChar == null || (!afterChar.isLetterOrDigit() && afterChar != '_')) {
+			// Boundary check passed — safe to replace
+			sb.append(this, start, idx).append(new)
+			start = afterIdx
+		} else {
+			// Boundary check failed — skip this occurrence (advance one char to avoid infinite loop)
+			sb.append(this, start, idx + 1)
+			start = idx + 1
+		}
+		idx = indexOf(old, start)
+	}
+	sb.append(this, start, length)
+	return sb.toString()
 }

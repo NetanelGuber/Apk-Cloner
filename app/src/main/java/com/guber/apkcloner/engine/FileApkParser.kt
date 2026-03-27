@@ -51,11 +51,15 @@ class FileApkParser(private val context: Context) {
 			for (entry in entries) {
 				if (entry.name == "base.apk") {
 					val dest = File(stagingDir, "base.apk")
-					zip.getInputStream(entry).use { it.copyTo(dest.outputStream()) }
+					zip.getInputStream(entry).use { input ->
+						dest.outputStream().use { output -> input.copyTo(output) }
+					}
 					baseApk = dest
 				} else {
 					val dest = File(stagingDir, "split_${splits.size}.apk")
-					zip.getInputStream(entry).use { it.copyTo(dest.outputStream()) }
+					zip.getInputStream(entry).use { input ->
+						dest.outputStream().use { output -> input.copyTo(output) }
+					}
 					splits.add(dest)
 				}
 			}
@@ -107,11 +111,15 @@ class FileApkParser(private val context: Context) {
 			for (entry in apkEntries) {
 				if (entry.name == baseEntryName) {
 					val dest = File(stagingDir, "base.apk")
-					zip.getInputStream(entry).use { it.copyTo(dest.outputStream()) }
+					zip.getInputStream(entry).use { input ->
+						dest.outputStream().use { output -> input.copyTo(output) }
+					}
 					baseApk = dest
 				} else {
 					val dest = File(stagingDir, "split_${splits.size}.apk")
-					zip.getInputStream(entry).use { it.copyTo(dest.outputStream()) }
+					zip.getInputStream(entry).use { input ->
+						dest.outputStream().use { output -> input.copyTo(output) }
+					}
 					splits.add(dest)
 				}
 			}

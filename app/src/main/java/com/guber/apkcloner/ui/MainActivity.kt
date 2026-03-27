@@ -31,14 +31,35 @@ import com.guber.apkcloner.util.PackageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.activity.result.contract.ActivityResultContracts
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
 	companion object {
 		private const val REQUEST_STORAGE_PERMISSION = 100
-		private const val REQUEST_INSTALL_PERMISSION = 101
-		private const val REQUEST_FILE_PICKER = 102
+	}
+
+	private val filePickerLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		val uri = result.data?.data
+		if (uri != null) onFileSelected(uri)
+	}
+
+	private val installPermissionLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { _ ->
+		val installer = ApkInstaller(this)
+		if (installer.canInstallPackages()) {
+			val pending = pendingCloneSettings
+			pendingCloneSettings = null
+			if (pending != null) {
+				startCloning(pending)
+			} else {
+				Toast.makeText(this, "Permission granted. Select an app to clone.", Toast.LENGTH_SHORT).show()
+			}
+		}
 	}
 
 	private lateinit var binding: ActivityMainBinding
@@ -114,7 +135,7 @@ class MainActivity : AppCompatActivity() {
 			addCategory(Intent.CATEGORY_OPENABLE)
 			type = "*/*"
 		}
-		startActivityForResult(intent, REQUEST_FILE_PICKER)
+		filePickerLauncher.launch(intent)
 	}
 
 	private fun filterApps(query: String) {
@@ -259,6 +280,7 @@ class MainActivity : AppCompatActivity() {
 				cloneStarted = true
 				val settings = CloneSettings(
 					sourcePackageName = packageName,
+					newPackageName = generateUniquePackageName(packageName),
 					cloneLabel = labelEditText.text.toString().trim()
 						.takeIf { it.isNotEmpty() } ?: "$appLabel Clone",
 					deepClone = deepCloneCheckbox.isChecked,
@@ -283,6 +305,27 @@ class MainActivity : AppCompatActivity() {
 			.show()
 	}
 
+	private fun generateUniquePackageName(source: String): String {
+		val base = CloneSettings.generateNewPackageName(source)
+		if (!isPackageInstalled(base)) return base
+		var n = 2
+		while (n <= 100) {
+			val candidate = "${base}${n}"
+			if (!isPackageInstalled(candidate)) return candidate
+			n++
+		}
+		return base  // safety valve: give up and let the installer reject the collision
+	}
+
+	private fun isPackageInstalled(packageName: String): Boolean {
+		return try {
+			packageManager.getApplicationInfo(packageName, 0)
+			true
+		} catch (_: PackageManager.NameNotFoundException) {
+			false
+		}
+	}
+
 	private fun startCloning(settings: CloneSettings) {
 		// Check install permission first
 		val installer = ApkInstaller(this)
@@ -295,7 +338,7 @@ class MainActivity : AppCompatActivity() {
 					Toast.LENGTH_LONG
 				).show()
 				pendingCloneSettings = settings
-				startActivityForResult(permIntent, REQUEST_INSTALL_PERMISSION)
+				installPermissionLauncher.launch(permIntent)
 				return
 			}
 		}
@@ -304,29 +347,5 @@ class MainActivity : AppCompatActivity() {
 			Intent(this, CloneProgressActivity::class.java)
 				.putExtra("settings", settings)
 		)
-	}
-
-	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		super.onActivityResult(requestCode, resultCode, data)
-		when (requestCode) {
-			REQUEST_FILE_PICKER -> {
-				val uri = data?.data
-				if (uri != null) {
-					onFileSelected(uri)
-				}
-			}
-			REQUEST_INSTALL_PERMISSION -> {
-				val installer = ApkInstaller(this)
-				if (installer.canInstallPackages()) {
-					val pending = pendingCloneSettings
-					pendingCloneSettings = null
-					if (pending != null) {
-						startCloning(pending)
-					} else {
-						Toast.makeText(this, "Permission granted. Select an app to clone.", Toast.LENGTH_SHORT).show()
-					}
-				}
-			}
-		}
 	}
 }

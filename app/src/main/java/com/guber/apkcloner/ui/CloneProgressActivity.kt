@@ -1,5 +1,6 @@
 package com.guber.apkcloner.ui
 
+import android.app.Application
 import android.content.BroadcastReceiver
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -12,8 +13,8 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.guber.apkcloner.databinding.ActivityCloneProgressBinding
@@ -30,7 +31,6 @@ class CloneProgressActivity : AppCompatActivity() {
 
 	private lateinit var binding: ActivityCloneProgressBinding
 	private lateinit var viewModel: CloneProgressViewModel
-	private var installReceiver: BroadcastReceiver? = null
 	private var installStarted = false
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,8 +43,12 @@ class CloneProgressActivity : AppCompatActivity() {
 
 		viewModel = ViewModelProvider(this)[CloneProgressViewModel::class.java]
 
-		@Suppress("DEPRECATION")
-		val settings = intent.getSerializableExtra("settings") as? CloneSettings
+		val settings = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			intent.getSerializableExtra("settings", CloneSettings::class.java)
+		} else {
+			@Suppress("DEPRECATION")
+			intent.getSerializableExtra("settings") as? CloneSettings
+		}
 		if (settings == null) {
 			finish()
 			return
@@ -89,35 +93,9 @@ class CloneProgressActivity : AppCompatActivity() {
 			}
 		}
 
-		registerInstallReceiver()
-
 		if (!viewModel.started) {
 			viewModel.started = true
 			viewModel.startCloning(settings, applicationContext)
-		}
-	}
-
-	private fun registerInstallReceiver() {
-		installReceiver = object : BroadcastReceiver() {
-			override fun onReceive(context: Context, intent: Intent) {
-				val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1)
-				when (status) {
-					PackageInstaller.STATUS_SUCCESS -> {
-						viewModel.done.postValue(true)
-					}
-					else -> {
-						val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
-						viewModel.error.postValue("Install failed: ${message ?: "Unknown error (status=$status)"}")
-					}
-				}
-			}
-		}
-
-		val filter = IntentFilter(ApkInstaller.ACTION_INSTALL_STATUS)
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			registerReceiver(installReceiver, filter, RECEIVER_NOT_EXPORTED)
-		} else {
-			registerReceiver(installReceiver, filter)
 		}
 	}
 
@@ -139,24 +117,43 @@ class CloneProgressActivity : AppCompatActivity() {
 		finish()
 		return true
 	}
-
-	override fun onDestroy() {
-		super.onDestroy()
-		installReceiver?.let {
-			try {
-				unregisterReceiver(it)
-			} catch (_: Exception) {
-			}
-		}
-	}
 }
 
-class CloneProgressViewModel : ViewModel() {
+class CloneProgressViewModel(application: Application) : AndroidViewModel(application) {
 	val status = MutableLiveData<String>()
 	val progress = MutableLiveData(0)
 	val error = MutableLiveData<String?>()
 	val done = MutableLiveData(false)
 	var started = false
+
+	private val installReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context, intent: Intent) {
+			val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1)
+			when (status) {
+				PackageInstaller.STATUS_SUCCESS -> done.postValue(true)
+				else -> {
+					val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
+					error.postValue("Install failed: ${message ?: "Unknown error (status=$status)"}")
+				}
+			}
+		}
+	}
+
+	init {
+		val filter = IntentFilter(ApkInstaller.ACTION_INSTALL_STATUS)
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			application.registerReceiver(installReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+		} else {
+			application.registerReceiver(installReceiver, filter)
+		}
+	}
+
+	override fun onCleared() {
+		super.onCleared()
+		try {
+			getApplication<Application>().unregisterReceiver(installReceiver)
+		} catch (_: Exception) {}
+	}
 
 	fun startCloning(settings: CloneSettings, context: Context) {
 		viewModelScope.launch(Dispatchers.IO) {

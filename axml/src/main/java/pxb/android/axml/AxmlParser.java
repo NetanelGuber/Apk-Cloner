@@ -49,6 +49,7 @@ public class AxmlParser implements ResConst {
     private int attributeCount;
 
     private IntBuffer attrs;
+    private int attrSizeInts = 5; // each attribute is 5 ints (20 bytes) in the standard format
 
     private int classAttribute;
     private int fileSize = -1;
@@ -86,18 +87,18 @@ public class AxmlParser implements ResConst {
     }
 
     public String getAttrName(int i) {
-        int idx = attrs.get(i * 5 + 1);
+        int idx = attrs.get(i * attrSizeInts + 1);
         return strings[idx];
 
     }
 
     public String getAttrNs(int i) {
-        int idx = attrs.get(i * 5 + 0);
+        int idx = attrs.get(i * attrSizeInts + 0);
         return idx >= 0 ? strings[idx] : null;
     }
 
     String getAttrRawString(int i) {
-        int idx = attrs.get(i * 5 + 2);
+        int idx = attrs.get(i * attrSizeInts + 2);
         if (idx >= 0) {
             return strings[idx];
         }
@@ -106,7 +107,7 @@ public class AxmlParser implements ResConst {
 
     public int getAttrResId(int i) {
         if (resourceIds != null) {
-            int idx = attrs.get(i * 5 + 1);
+            int idx = attrs.get(i * attrSizeInts + 1);
             if (idx >= 0 && idx < resourceIds.length) {
                 return resourceIds[idx];
             }
@@ -115,11 +116,11 @@ public class AxmlParser implements ResConst {
     }
 
     public int getAttrType(int i) {
-        return attrs.get(i * 5 + 3) >> 24;
+        return attrs.get(i * attrSizeInts + 3) >> 24;
     }
 
     public Object getAttrValue(int i) {
-        int v = attrs.get(i * 5 + 4);
+        int v = attrs.get(i * attrSizeInts + 4);
 
         if (i == idAttribute) {
             return ValueWrapper.wrapId(v, getAttrRawString(i));
@@ -179,9 +180,16 @@ public class AxmlParser implements ResConst {
                         in.getInt();/* skip, 0xFFFFFFFF */
                         nsIdx = in.getInt();
                         nameIdx = in.getInt();
-                        int flag = in.getInt();// 0x00140014 ?
+                        int flag = in.getInt();// attributeStart(lo16) | attributeSize(hi16)
                         if (flag != 0x00140014) {
-                            throw new RuntimeException();
+                            int attributeSize = (flag >> 16) & 0xFFFF;
+                            System.err.println("AxmlParser: non-standard attribute chunk 0x"
+                                    + Integer.toHexString(flag)
+                                    + " (attributeSize=" + attributeSize + "), attempting to continue");
+                            attrSizeInts = (attributeSize >= 20 && (attributeSize % 4) == 0)
+                                    ? (attributeSize / 4) : 5;
+                        } else {
+                            attrSizeInts = 5;
                         }
                     }
 

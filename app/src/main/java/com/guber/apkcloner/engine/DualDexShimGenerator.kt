@@ -2,6 +2,7 @@ package com.guber.apkcloner.engine
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import org.jf.dexlib2.AccessFlags
 import org.jf.dexlib2.DexFileFactory
 import org.jf.dexlib2.Opcode
@@ -20,7 +21,8 @@ class DualDexShimGenerator(
 	private val oldPackageName: String,
 	private val newPackageName: String,
 	private val minSdk: Int,
-	private val sourceApkPath: String? = null
+	private val sourceApkPath: String? = null,
+	private val splitApkPaths: List<String> = emptyList()
 ) {
 
 	@Suppress("DEPRECATION")
@@ -54,6 +56,14 @@ class DualDexShimGenerator(
 		packageInfo.receivers?.forEach { if (it.name.startsWith(prefix)) componentClasses.add(it.name) }
 		packageInfo.providers?.forEach { if (it.name.startsWith(prefix)) componentClasses.add(it.name) }
 
+		for (splitPath in splitApkPaths) {
+			val splitInfo = pm.getPackageArchiveInfo(splitPath, flags) ?: continue
+			splitInfo.activities?.forEach { if (it.name.startsWith(prefix)) componentClasses.add(it.name) }
+			splitInfo.services?.forEach { if (it.name.startsWith(prefix)) componentClasses.add(it.name) }
+			splitInfo.receivers?.forEach { if (it.name.startsWith(prefix)) componentClasses.add(it.name) }
+			splitInfo.providers?.forEach { if (it.name.startsWith(prefix)) componentClasses.add(it.name) }
+		}
+
 		if (componentClasses.isEmpty()) return null
 
 		val oldPath = oldPackageName.replace('.', '/')
@@ -61,7 +71,7 @@ class DualDexShimGenerator(
 
 		val shimClasses = componentClasses.map { buildShimClass(it, oldPath, newPath) }
 
-		val opcodes = Opcodes.forApi(minSdk)
+		val opcodes = Opcodes.forApi(maxOf(minSdk, Build.VERSION.SDK_INT))
 		val dexFile = ImmutableDexFile(opcodes, shimClasses)
 		val tempFile = File(context.cacheDir, "shim_${System.currentTimeMillis()}.dex")
 		return try {

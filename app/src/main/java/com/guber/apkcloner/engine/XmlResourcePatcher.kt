@@ -44,16 +44,22 @@ class XmlResourcePatcher(
 			if (attr.type == NodeVisitor.TYPE_STRING && attr.value is String) {
 				val str = attr.value as String
 				if (str.contains(oldPkg) || str.contains(oldPath)) {
-					attr.value = str.replace(oldPkg, newPkg).replace(oldPath, newPath)
-					changed = true
+					val patched = str.replaceBounded(oldPkg, newPkg).replaceBounded(oldPath, newPath)
+					if (patched != str) {
+						attr.value = patched
+						changed = true
+					}
 				}
 			}
 		}
 
 		val text = node.text
 		if (text != null && (text.text.contains(oldPkg) || text.text.contains(oldPath))) {
-			text.text = text.text.replace(oldPkg, newPkg).replace(oldPath, newPath)
-			changed = true
+			val patched = text.text.replaceBounded(oldPkg, newPkg).replaceBounded(oldPath, newPath)
+			if (patched != text.text) {
+				text.text = patched
+				changed = true
+			}
 		}
 
 		for (child in node.children) {

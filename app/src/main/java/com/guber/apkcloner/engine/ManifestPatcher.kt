@@ -110,7 +110,7 @@ class ManifestPatcher {
 					foundAppName = true
 					if (attr.type == NodeVisitor.TYPE_STRING && attr.value is String) {
 						val resolved = resolveClassName(attr.value as String, oldPkg)
-						capturedAppClass = if (deepClone) resolved.replace(oldPkg, newPkg) else resolved
+						capturedAppClass = if (deepClone) resolved.replaceBounded(oldPkg, newPkg) else resolved
 						attr.value = PackageNameShimGenerator.SHIM_CLASS
 					}
 				}
@@ -120,7 +120,7 @@ class ManifestPatcher {
 				tagName in COMPONENT_TAGS && attrName == "name" -> {
 					if (attr.type == NodeVisitor.TYPE_STRING && attr.value is String) {
 						val resolved = resolveClassName(attr.value as String, oldPkg)
-						attr.value = if (deepClone) resolved.replace(oldPkg, newPkg) else resolved
+						attr.value = if (deepClone) resolved.replaceBounded(oldPkg, newPkg) else resolved
 					}
 				}
 
@@ -128,7 +128,7 @@ class ManifestPatcher {
 				tagName == "activity-alias" && attrName == "targetActivity" -> {
 					if (attr.type == NodeVisitor.TYPE_STRING && attr.value is String) {
 						val resolved = resolveClassName(attr.value as String, oldPkg)
-						attr.value = if (deepClone) resolved.replace(oldPkg, newPkg) else resolved
+						attr.value = if (deepClone) resolved.replaceBounded(oldPkg, newPkg) else resolved
 					}
 				}
 
@@ -136,7 +136,7 @@ class ManifestPatcher {
 				tagName == "application" && attrName == "backupAgent" -> {
 					if (attr.type == NodeVisitor.TYPE_STRING && attr.value is String) {
 						val resolved = resolveClassName(attr.value as String, oldPkg)
-						attr.value = if (deepClone) resolved.replace(oldPkg, newPkg) else resolved
+						attr.value = if (deepClone) resolved.replaceBounded(oldPkg, newPkg) else resolved
 					}
 				}
 
@@ -145,7 +145,7 @@ class ManifestPatcher {
 					val authorities = attr.value as? String ?: continue
 					attr.value = authorities
 						.split(";")
-						.joinToString(";") { it.replace(oldPkg, newPkg) }
+						.joinToString(";") { it.replaceBounded(oldPkg, newPkg) }
 				}
 
 				// <application android:label="..."> — always intercept this branch
@@ -155,7 +155,7 @@ class ManifestPatcher {
 					if (attr.type == NodeVisitor.TYPE_STRING && attr.value is String) {
 						var v = attr.value as String
 						if (cloneLabel != null) v = cloneLabel
-						else if (v.contains(oldPkg)) v = v.replace(oldPkg, newPkg)
+						else if (v.contains(oldPkg)) v = v.replaceBounded(oldPkg, newPkg)
 						attr.value = v
 					} else {
 						// Resource reference — capture the ID for ResourcePatcher (BUG-5)
@@ -177,7 +177,7 @@ class ManifestPatcher {
 				attr.type == NodeVisitor.TYPE_STRING && attr.value is String -> {
 					val strVal = attr.value as String
 					if (strVal.contains(oldPkg)) {
-						attr.value = strVal.replace(oldPkg, newPkg)
+						attr.value = strVal.replaceBounded(oldPkg, newPkg)
 					}
 				}
 			}

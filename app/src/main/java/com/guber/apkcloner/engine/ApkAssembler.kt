@@ -10,6 +10,11 @@ import java.util.zip.ZipOutputStream
 
 class ApkAssembler {
 
+	private companion object {
+		val DEX_PATTERN = Regex("classes\\d*\\.dex")
+	}
+
+
 	private var xmlPatcher: XmlResourcePatcher? = null
 	private var assetsPatcher: AssetsPatcher? = null
 	private var metadataPatcher: MetadataPatcher? = null
@@ -48,7 +53,7 @@ class ApkAssembler {
 						continue
 					}
 
-					if (name.matches(Regex("classes\\d*\\.dex"))) dexCount++
+					if (name.matches(DEX_PATTERN)) dexCount++
 
 					val newEntry = ZipEntry(name)
 
@@ -132,7 +137,7 @@ class ApkAssembler {
 		val mp = metadataPatcher
 		if (mp != null && mp.shouldPatch(name)) {
 			val raw = zin.readBytes()
-			return mp.patch(raw) ?: raw
+			return mp.patch(raw, name) ?: raw
 		}
 
 		val nlp = nativeLibPatcher
@@ -182,6 +187,18 @@ class ApkAssembler {
 							zout.putNextEntry(newEntry)
 							zout.write(patchedManifest)
 						}
+						name == "resources.arsc" -> {
+							val raw = zin.readBytes()
+							val patched = try {
+								ResourcePatcher().patch(raw, oldPackageName, newPackageName, null, null)
+							} catch (_: Exception) { raw }
+							newEntry.method = ZipEntry.STORED
+							newEntry.size = patched.size.toLong()
+							newEntry.compressedSize = patched.size.toLong()
+							newEntry.crc = calculateCrc32(patched)
+							zout.putNextEntry(newEntry)
+							zout.write(patched)
+						}
 						xp.shouldPatch(name) -> {
 							val raw = zin.readBytes()
 							val patched = xp.patch(raw) ?: raw
@@ -194,7 +211,7 @@ class ApkAssembler {
 						}
 						mp.shouldPatch(name) -> {
 							val raw = zin.readBytes()
-							val patched = mp.patch(raw) ?: raw
+							val patched = mp.patch(raw, name) ?: raw
 							writeRawEntry(newEntry, entry, patched, zout)
 						}
 						nlp != null && nlp.shouldPatch(name) -> {

@@ -199,7 +199,7 @@ public class ArscParser implements ResConst {
     // }
 
     private void readPackage(ByteBuffer in, Chunk pkgChunk) throws IOException {
-        int pid = in.getInt() % 0xFF;
+        int pid = in.getInt() & 0xFF;
 
         String name;
         {

@@ -1,4 +1,4 @@
-package com.guber.apkcloner.engine
+﻿package com.guber.apkcloner.engine
 
 import android.content.Context
 import android.os.Build
@@ -112,7 +112,8 @@ class CloneEngine(private val context: Context) {
 						settings.sourcePackageName,
 						settings.newPackageName,
 						minSdk,
-						if (settings.sourceApkPaths != null) workingApk.absolutePath else null
+						if (settings.sourceApkPaths != null) workingApk.absolutePath else null,
+						if (settings.sourceApkPaths != null) apkSet.splitApks.map { it.absolutePath } else emptyList()
 					).generate()
 					if (dualDexBytes != null) extraDexFiles.add(dualDexBytes)
 					onProgress("Compatibility shim generated", 65)

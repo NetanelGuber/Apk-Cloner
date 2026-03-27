@@ -75,7 +75,7 @@ class ResourcePatcher {
 		// appending are sequential steps, not mutually exclusive branches.
 		var updated = value.raw
 		if (updated.contains(oldPkg)) {
-			updated = updated.replace(oldPkg, newPkg)
+			updated = updated.replaceBounded(oldPkg, newPkg)
 		}
 		if (cloneLabel != null && isLabelEntry) {
 			updated = cloneLabel

@@ -1,5 +1,6 @@
 package com.guber.apkcloner.engine
 
+import android.os.Build
 import org.jf.dexlib2.DexFileFactory
 import org.jf.dexlib2.Opcode
 import org.jf.dexlib2.Opcodes
@@ -14,6 +15,7 @@ import org.jf.dexlib2.iface.MethodImplementation
 import org.jf.dexlib2.iface.instruction.OneRegisterInstruction
 import org.jf.dexlib2.iface.instruction.ReferenceInstruction
 import org.jf.dexlib2.iface.reference.StringReference
+import org.jf.dexlib2.iface.value.ArrayEncodedValue
 import org.jf.dexlib2.iface.value.EncodedValue
 import org.jf.dexlib2.iface.value.StringEncodedValue
 import org.jf.dexlib2.iface.value.TypeEncodedValue
@@ -25,11 +27,13 @@ import org.jf.dexlib2.immutable.ImmutableField
 import org.jf.dexlib2.immutable.ImmutableMethod
 import org.jf.dexlib2.immutable.ImmutableMethodParameter
 import org.jf.dexlib2.immutable.reference.ImmutableStringReference
+import org.jf.dexlib2.immutable.value.ImmutableArrayEncodedValue
 import org.jf.dexlib2.immutable.value.ImmutableStringEncodedValue
 import org.jf.dexlib2.immutable.value.ImmutableTypeEncodedValue
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.util.zip.CRC32
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
@@ -81,7 +85,7 @@ class DexPatcher {
 		newPath: String,
 		minSdk: Int
 	) {
-		val opcodes = Opcodes.forApi(minSdk)
+		val opcodes = Opcodes.forApi(maxOf(minSdk, Build.VERSION.SDK_INT))
 		val dex = DexFileFactory.loadDexFile(dexFile, opcodes)
 
 		val patchedClasses = dex.classes.map { classDef ->
@@ -105,7 +109,7 @@ class DexPatcher {
 		for (field in classDef.fields) {
 			if (typeContainsPath(field.type, oldPath)) return true
 			val init = field.initialValue
-			if (init is StringEncodedValue && (init.value.contains(oldPkg) || init.value.contains(oldPath))) return true
+			if (init != null && encodedValueNeedsPatching(init, oldPkg, oldPath)) return true
 			if (annotationsNeedPatching(field.annotations, oldPkg, oldPath)) return true
 		}
 
@@ -127,12 +131,17 @@ class DexPatcher {
 		for (ann in annotations) {
 			if (typeContainsPath(ann.type, oldPath)) return true
 			for (elem in ann.elements) {
-				val v = elem.value
-				if (v is StringEncodedValue && (v.value.contains(oldPkg) || v.value.contains(oldPath))) return true
-				if (v is TypeEncodedValue && typeContainsPath(v.value, oldPath)) return true
+				if (encodedValueNeedsPatching(elem.value, oldPkg, oldPath)) return true
 			}
 		}
 		return false
+	}
+
+	private fun encodedValueNeedsPatching(value: EncodedValue, oldPkg: String, oldPath: String): Boolean = when {
+		value is StringEncodedValue -> value.value.contains(oldPkg) || value.value.contains(oldPath)
+		value is TypeEncodedValue -> typeContainsPath(value.value, oldPath)
+		value is ArrayEncodedValue -> value.value.any { encodedValueNeedsPatching(it, oldPkg, oldPath) }
+		else -> false
 	}
 
 	private fun methodImplHasMatchingStrings(
@@ -219,9 +228,17 @@ class DexPatcher {
 			val str = value.value
 			if (str.contains(oldPkg) || str.contains(oldPath)) {
 				return ImmutableStringEncodedValue(
-					str.replace(oldPkg, newPkg).replace(oldPath, newPath)
+					str.replaceBounded(oldPkg, newPkg).replaceBounded(oldPath, newPath)
 				)
 			}
+		}
+		if (value is TypeEncodedValue) {
+			val rewritten = rewriteType(value.value, oldPath, newPath)
+			if (rewritten != value.value) return ImmutableTypeEncodedValue(rewritten)
+		}
+		if (value is ArrayEncodedValue) {
+			val patchedElements = value.value.map { patchEncodedValue(it, oldPkg, newPkg, oldPath, newPath) }
+			if (patchedElements != value.value) return ImmutableArrayEncodedValue(patchedElements)
 		}
 		return value
 	}
@@ -236,25 +253,9 @@ class DexPatcher {
 		return annotations.map { ann ->
 			val newType = rewriteType(ann.type, oldPath, newPath)
 			val newElems = ann.elements.map { elem ->
-				val origVal = elem.value
-				when {
-					origVal is StringEncodedValue &&
-							(origVal.value.contains(oldPkg) || origVal.value.contains(oldPath)) ->
-						ImmutableAnnotationElement(
-							elem.name,
-							ImmutableStringEncodedValue(
-								origVal.value.replace(oldPkg, newPkg).replace(oldPath, newPath)
-							)
-						)
-					origVal is TypeEncodedValue -> {
-						val rewritten = rewriteType(origVal.value, oldPath, newPath)
-						if (rewritten != origVal.value)
-							ImmutableAnnotationElement(elem.name, ImmutableTypeEncodedValue(rewritten))
-						else
-							ImmutableAnnotationElement.of(elem)
-					}
-					else -> ImmutableAnnotationElement.of(elem)
-				}
+				val patched = patchEncodedValue(elem.value, oldPkg, newPkg, oldPath, newPath)
+				if (patched !== elem.value) ImmutableAnnotationElement(elem.name, patched)
+				else ImmutableAnnotationElement.of(elem)
 			}
 			ImmutableAnnotation(ann.visibility, newType, newElems)
 		}.toSet()
@@ -328,7 +329,7 @@ class DexPatcher {
 			val originalStr = ref.string
 			if (!originalStr.contains(oldPkg) && !originalStr.contains(oldPath)) continue
 
-			val patchedStr = originalStr.replace(oldPkg, newPkg).replace(oldPath, newPath)
+			val patchedStr = originalStr.replaceBounded(oldPkg, newPkg).replaceBounded(oldPath, newPath)
 			val newRef = ImmutableStringReference(patchedStr)
 			val regA = (instruction as OneRegisterInstruction).registerA
 
@@ -417,7 +418,12 @@ class DexPatcher {
 			}
 		}
 
-		apkFile.delete()
-		tempApk.renameTo(apkFile)
+		val backup = File(apkFile.parent, "${apkFile.name}.bak")
+		apkFile.renameTo(backup)
+		if (!tempApk.renameTo(apkFile)) {
+			backup.renameTo(apkFile)
+			throw IOException("Failed to replace DEX entries in ${apkFile.name}")
+		}
+		backup.delete()
 	}
 }
