@@ -44,16 +44,14 @@ class CloneProgressActivity : AppCompatActivity() {
 
 		viewModel = ViewModelProvider(this)[CloneProgressViewModel::class.java]
 
-		val settings = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			intent.getSerializableExtra("settings", CloneSettings::class.java)
-		} else {
-			@Suppress("DEPRECATION")
-			intent.getSerializableExtra("settings") as? CloneSettings
-		}
-		if (settings == null) {
-			finish()
-			return
-		}
+		val settings: CloneSettings = (
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+				intent.getSerializableExtra("settings", CloneSettings::class.java)
+			} else {
+				@Suppress("DEPRECATION")
+				intent.getSerializableExtra("settings") as? CloneSettings
+			}
+		) ?: run { finish(); return }
 
 		viewModel.status.observe(this) { status ->
 			binding.statusText.text = status
@@ -72,7 +70,11 @@ class CloneProgressActivity : AppCompatActivity() {
 
 		viewModel.done.observe(this) { done ->
 			if (done) {
-				binding.statusText.text = "Clone installed successfully!"
+				binding.statusText.text = when {
+					settings.saveToStorage && !settings.installAfterBuild -> "APK saved to Downloads!"
+					settings.saveToStorage -> "Installed and saved to Downloads!"
+					else -> "Clone installed successfully!"
+				}
 				binding.doneButton.isEnabled = true
 			}
 		}
@@ -157,12 +159,19 @@ class CloneProgressViewModel(application: Application) : AndroidViewModel(applic
 	}
 
 	fun startCloning(settings: CloneSettings, context: Context) {
+		val installAfterBuild = settings.installAfterBuild
 		viewModelScope.launch(Dispatchers.IO) {
 			try {
 				CloneEngine(context).clone(settings) { step, pct ->
 					withContext(Dispatchers.Main) {
 						status.value = step
 						progress.value = pct
+					}
+				}
+				// Install is async (broadcast-driven). For save-only, signal done directly.
+				if (!installAfterBuild) {
+					withContext(Dispatchers.Main) {
+						done.value = true
 					}
 				}
 			} catch (e: CancellationException) {

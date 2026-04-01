@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
+import java.io.File
 
 object PackageUtils {
 
@@ -12,11 +13,13 @@ object PackageUtils {
 		val label: String,
 		val icon: Drawable,
 		val sourceDir: String,
-		val isSystemApp: Boolean
+		val isSystemApp: Boolean,
+		val isClone: Boolean
 	)
 
 	fun getInstalledApps(context: Context, includeSystem: Boolean = false): List<AppInfo> {
 		val pm = context.packageManager
+		val keystoreDir = File(context.filesDir, "keystores")
 		return pm.getInstalledApplications(PackageManager.GET_META_DATA)
 			.filter { includeSystem || (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
 			.map { appInfo ->
@@ -25,7 +28,8 @@ object PackageUtils {
 					label = pm.getApplicationLabel(appInfo).toString(),
 					icon = pm.getApplicationIcon(appInfo),
 					sourceDir = appInfo.sourceDir,
-					isSystemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+					isSystemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
+					isClone = File(keystoreDir, "${appInfo.packageName}.jks").exists()
 				)
 			}
 			.sortedBy { it.label.lowercase() }

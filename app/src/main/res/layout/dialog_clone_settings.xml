@@ -1,223 +1,322 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="match_parent"
-	android:layout_height="wrap_content">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
-	<LinearLayout
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:orientation="vertical"
-		android:padding="24dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
 
-		<com.google.android.material.textfield.TextInputLayout
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:hint="Clone name">
+        <!-- Clone name -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Clone name">
 
-			<com.google.android.material.textfield.TextInputEditText
-				android:id="@+id/labelEditText"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:inputType="text"
-				android:maxLines="1" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/labelEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="1"
+                android:scrollHorizontally="true" />
 
-		</com.google.android.material.textfield.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
-		<!-- Compatibility section header -->
-		<LinearLayout
-			android:id="@+id/compatibilityHeader"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:orientation="horizontal"
-			android:layout_marginTop="20dp"
-			android:paddingTop="8dp"
-			android:paddingBottom="8dp"
-			android:clickable="true"
-			android:focusable="true"
-			android:background="?android:attr/selectableItemBackground">
+        <!-- After cloning action -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="After cloning:"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:textColor="?android:textColorPrimary" />
 
-			<TextView
-				android:layout_width="0dp"
-				android:layout_height="wrap_content"
-				android:layout_weight="1"
-				android:text="Compatibility"
-				android:textStyle="bold"
-				android:textSize="14sp"
-				android:textColor="?android:textColorPrimary" />
+        <RadioGroup
+            android:id="@+id/actionRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-			<TextView
-				android:id="@+id/compatibilityChevron"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:text="▸"
-				android:textSize="14sp"
-				android:textColor="?android:textColorSecondary" />
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/radioInstall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Install"
+                android:checked="true" />
 
-		</LinearLayout>
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/radioSave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Save to storage" />
 
-		<View
-			android:layout_width="match_parent"
-			android:layout_height="1dp"
-			android:background="?android:attr/listDivider" />
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/radioInstallAndSave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Install + Save to storage" />
 
-		<!-- Compatibility content -->
-		<LinearLayout
-			android:id="@+id/compatibilityContent"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:orientation="vertical"
-			android:visibility="gone">
+        </RadioGroup>
 
-			<com.google.android.material.checkbox.MaterialCheckBox
-				android:id="@+id/deepCloneCheckbox"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="8dp"
-				android:text="Deep clone (patch DEX strings)"
-				android:checked="false" />
+        <!-- Save location row — visible only when a save option is selected -->
+        <LinearLayout
+            android:id="@+id/saveLocationSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="2dp"
+            android:visibility="gone">
 
-			<TextView
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="4dp"
-				android:layout_marginStart="32dp"
-				android:text="Fixes apps that hardcode their own package name in code. Slower but more compatible."
-				android:textSize="12sp"
-				android:textColor="?android:textColorSecondary" />
+            <TextView
+                android:id="@+id/saveLocationText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Save to: Downloads/APK Cloner (default)"
+                android:textSize="12sp"
+                android:textColor="?android:textColorSecondary"
+                android:paddingStart="8dp" />
 
-			<com.google.android.material.checkbox.MaterialCheckBox
-				android:id="@+id/patchNativeCheckbox"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="12dp"
-				android:text="Patch native libraries (risky)"
-				android:checked="false" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/browseButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Browse…"
+                android:textSize="12sp"
+                android:minHeight="0dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp" />
 
-			<TextView
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="4dp"
-				android:layout_marginStart="32dp"
-				android:text="Replaces package name in .so files. May corrupt binaries — only use if clone crashes without it."
-				android:textSize="12sp"
-				android:textColor="?android:textColorSecondary" />
+        </LinearLayout>
 
-			<com.google.android.material.checkbox.MaterialCheckBox
-				android:id="@+id/dualDexCheckbox"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="12dp"
-				android:text="Dual DEX (bundle original + shim)"
-				android:checked="false" />
+        <!-- Compatibility section header -->
+        <LinearLayout
+            android:id="@+id/compatibilityHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
 
-			<TextView
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="4dp"
-				android:layout_marginStart="32dp"
-				android:text="Bundles the original code alongside a thin compatibility shim. Significantly increases app size. Use as an alternative to Deep clone if that option causes crashes."
-				android:textSize="12sp"
-				android:textColor="?android:textColorSecondary" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Compatibility"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:textColor="?android:textColorPrimary" />
 
-			<com.google.android.material.checkbox.MaterialCheckBox
-				android:id="@+id/pkgShimCheckbox"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="12dp"
-				android:text="Package name shim"
-				android:checked="false" />
+            <TextView
+                android:id="@+id/compatibilityChevron"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="&#9658;"
+                android:textSize="14sp"
+                android:textColor="?android:textColorSecondary" />
 
-			<TextView
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="4dp"
-				android:layout_marginBottom="8dp"
-				android:layout_marginStart="32dp"
-				android:text="Overrides getPackageName() to return the original package name. Use for games that lose save data after cloning. Warning: may crash apps that use the package name for system lookups (e.g. AndroidX Startup)."
-				android:textSize="12sp"
-				android:textColor="?android:textColorSecondary" />
+        </LinearLayout>
 
-		</LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider" />
 
-		<!-- Manifest section header -->
-		<LinearLayout
-			android:id="@+id/manifestHeader"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:orientation="horizontal"
-			android:layout_marginTop="12dp"
-			android:paddingTop="8dp"
-			android:paddingBottom="8dp"
-			android:clickable="true"
-			android:focusable="true"
-			android:background="?android:attr/selectableItemBackground">
+        <!-- Compatibility content -->
+        <LinearLayout
+            android:id="@+id/compatibilityContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
 
-			<TextView
-				android:layout_width="0dp"
-				android:layout_height="wrap_content"
-				android:layout_weight="1"
-				android:text="Manifest"
-				android:textStyle="bold"
-				android:textSize="14sp"
-				android:textColor="?android:textColorPrimary" />
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/deepCloneCheckbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Deep clone (patch DEX strings)"
+                android:checked="false" />
 
-			<TextView
-				android:id="@+id/manifestChevron"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:text="▸"
-				android:textSize="14sp"
-				android:textColor="?android:textColorSecondary" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginStart="32dp"
+                android:text="Fixes apps that hardcode their own package name in code. Slower but more compatible."
+                android:textSize="12sp"
+                android:textColor="?android:textColorSecondary" />
 
-		</LinearLayout>
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/patchNativeCheckbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Patch native libraries (risky)"
+                android:checked="false" />
 
-		<View
-			android:layout_width="match_parent"
-			android:layout_height="1dp"
-			android:background="?android:attr/listDivider" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginStart="32dp"
+                android:text="Replaces package name in .so files. May corrupt binaries — only use if clone crashes without it."
+                android:textSize="12sp"
+                android:textColor="?android:textColorSecondary" />
 
-		<!-- Manifest content -->
-		<LinearLayout
-			android:id="@+id/manifestContent"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:orientation="vertical"
-			android:visibility="gone">
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/dualDexCheckbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Dual DEX (bundle original + shim)"
+                android:checked="false" />
 
-			<com.google.android.material.textfield.TextInputLayout
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="12dp"
-				android:hint="Min SDK version (leave empty to keep original)">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginStart="32dp"
+                android:text="Bundles the original code alongside a thin compatibility shim. Significantly increases app size. Use as an alternative to Deep clone if that option causes crashes."
+                android:textSize="12sp"
+                android:textColor="?android:textColorSecondary" />
 
-				<com.google.android.material.textfield.TextInputEditText
-					android:id="@+id/minSdkEditText"
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:inputType="number"
-					android:maxLines="1" />
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/pkgShimCheckbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Package name shim"
+                android:checked="false" />
 
-			</com.google.android.material.textfield.TextInputLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="32dp"
+                android:text="Overrides getPackageName() to return the original package name. Use for games that lose save data after cloning. Warning: may crash apps that use the package name for system lookups (e.g. AndroidX Startup)."
+                android:textSize="12sp"
+                android:textColor="?android:textColorSecondary" />
 
-			<com.google.android.material.textfield.TextInputLayout
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_marginTop="12dp"
-				android:layout_marginBottom="8dp"
-				android:hint="Target SDK version (leave empty to keep original)">
+        </LinearLayout>
 
-				<com.google.android.material.textfield.TextInputEditText
-					android:id="@+id/targetSdkEditText"
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:inputType="number"
-					android:maxLines="1" />
+        <!-- Manifest section header -->
+        <LinearLayout
+            android:id="@+id/manifestHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
 
-			</com.google.android.material.textfield.TextInputLayout>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Manifest"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:textColor="?android:textColorPrimary" />
 
-		</LinearLayout>
+            <TextView
+                android:id="@+id/manifestChevron"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="&#9658;"
+                android:textSize="14sp"
+                android:textColor="?android:textColorSecondary" />
 
-	</LinearLayout>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider" />
+
+        <!-- Manifest content -->
+        <LinearLayout
+            android:id="@+id/manifestContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- Custom package name -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/customPackageLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Custom package name"
+                app:helperText="Leave blank for auto-generated"
+                app:helperTextEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/customPackageEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textNoSuggestions"
+                    android:maxLines="1"
+                    android:scrollHorizontally="true" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Min SDK override -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/minSdkLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Override min SDK"
+                app:helperTextEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/minSdkEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:maxLines="1" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Target SDK override -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/targetSdkLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="8dp"
+                android:hint="Override target SDK"
+                app:helperTextEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/targetSdkEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:maxLines="1" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
 
 </ScrollView>

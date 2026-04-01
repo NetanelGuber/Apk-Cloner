@@ -11,6 +11,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -22,6 +23,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.textfield.TextInputLayout
 import com.guber.apkcloner.R
 import com.guber.apkcloner.databinding.ActivityMainBinding
 import com.guber.apkcloner.engine.ApkInstaller
@@ -34,6 +36,8 @@ import kotlinx.coroutines.withContext
 import androidx.activity.result.contract.ActivityResultContracts
 import java.io.File
 
+private const val DEFAULT_SAVE_LOCATION_LABEL = "Downloads/APK Cloner (default)"
+
 class MainActivity : AppCompatActivity() {
 
 	companion object {
@@ -45,6 +49,28 @@ class MainActivity : AppCompatActivity() {
 	) { result ->
 		val uri = result.data?.data
 		if (uri != null) onFileSelected(uri)
+	}
+
+	/** Folder selected by the user for saving the cloned APK/ZIP. Null = use default Downloads dir. */
+	private var pendingSaveUri: Uri? = null
+
+	/** Reference to the location label inside the currently-open clone dialog, updated when the user picks a folder. */
+	private var pendingSaveLocationView: TextView? = null
+
+	private val saveLocationLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == RESULT_OK) {
+			val uri = result.data?.data ?: return@registerForActivityResult
+			try {
+				contentResolver.takePersistableUriPermission(
+					uri,
+					Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+				)
+			} catch (_: Exception) {}
+			pendingSaveUri = uri
+			pendingSaveLocationView?.text = "Save to: ${getFolderDisplayName(uri)}"
+		}
 	}
 
 	private val installPermissionLauncher = registerForActivityResult(
@@ -90,7 +116,12 @@ class MainActivity : AppCompatActivity() {
 
 	override fun onPrepareOptionsMenu(menu: Menu): Boolean {
 		val isDark = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
-		menu.findItem(R.id.action_toggle_dark_mode)?.title = if (isDark) "Light Mode" else "Dark Mode"
+		val themeItem = menu.findItem(R.id.action_toggle_dark_mode)
+		themeItem?.icon = ContextCompat.getDrawable(
+			this,
+			if (isDark) R.drawable.ic_light_mode else R.drawable.ic_dark_mode
+		)
+		themeItem?.title = if (isDark) "Switch to Light Mode" else "Switch to Dark Mode"
 		return super.onPrepareOptionsMenu(menu)
 	}
 
@@ -198,7 +229,8 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun onAppSelected(appInfo: PackageUtils.AppInfo) {
-		showCloneDialog("Clone ${appInfo.label}", appInfo.packageName, appInfo.label, null)
+		val (minSdk, targetSdk) = readAppSdkInfo(appInfo.packageName, null)
+		showCloneDialog("Clone ${appInfo.label}", appInfo.packageName, appInfo.label, null, minSdk, targetSdk)
 	}
 
 	private fun onFileSelected(uri: Uri) {
@@ -212,13 +244,16 @@ class MainActivity : AppCompatActivity() {
 			try {
 				val stagingDir = File(cacheDir, "import_staging")
 				val fileInfo = FileApkParser(this@MainActivity).parse(uri, stagingDir)
+				val (minSdk, targetSdk) = readAppSdkInfo(fileInfo.packageName, listOf(fileInfo.baseApkPath))
 				withContext(Dispatchers.Main) {
 					progressDialog.dismiss()
 					showCloneDialog(
 						"Clone ${fileInfo.appLabel}",
 						fileInfo.packageName,
 						fileInfo.appLabel,
-						listOf(fileInfo.baseApkPath) + fileInfo.splitApkPaths
+						listOf(fileInfo.baseApkPath) + fileInfo.splitApkPaths,
+						minSdk,
+						targetSdk
 					)
 				}
 			} catch (e: Exception) {
@@ -234,7 +269,58 @@ class MainActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun showCloneDialog(title: String, packageName: String, appLabel: String, sourceApkPaths: List<String>?) {
+	/** Reads min/target SDK from an installed package or a staged APK file. Safe to call from any thread. */
+	private fun readAppSdkInfo(packageName: String, sourceApkPaths: List<String>?): Pair<String, String> {
+		return try {
+			if (sourceApkPaths != null) {
+				@Suppress("DEPRECATION")
+				val info = packageManager.getPackageArchiveInfo(sourceApkPaths[0], 0)
+				val appInfo = info?.applicationInfo
+				val minSdk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+					appInfo?.minSdkVersion?.toString() ?: "?"
+				} else "?"
+				val targetSdk = appInfo?.targetSdkVersion?.toString() ?: "?"
+				Pair(minSdk, targetSdk)
+			} else {
+				val appInfo = packageManager.getApplicationInfo(packageName, 0)
+				val minSdk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+					appInfo.minSdkVersion.toString()
+				} else "?"
+				val targetSdk = appInfo.targetSdkVersion.toString()
+				Pair(minSdk, targetSdk)
+			}
+		} catch (_: Exception) {
+			Pair("?", "?")
+		}
+	}
+
+	/**
+	 * Converts a folder tree URI (from ACTION_OPEN_DOCUMENT_TREE) into a short human-readable label.
+	 * e.g. content://...tree/primary%3ADownload%2FMy+Folder → "Download/My Folder"
+	 */
+	private fun getFolderDisplayName(uri: Uri): String {
+		return try {
+			val segment = uri.lastPathSegment ?: return "Selected folder"
+			// Segment is "primary:Folder/Subfolder" or "storage-id:Folder"
+			segment.substringAfter(':').ifEmpty { "Selected folder" }
+		} catch (_: Exception) {
+			"Selected folder"
+		}
+	}
+
+	/** Returns true if the string is a valid Android package name (at least two dot-separated segments). */
+	private fun isValidPackageName(name: String): Boolean {
+		return name.matches(Regex("[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)+"))
+	}
+
+	private fun showCloneDialog(
+		title: String,
+		packageName: String,
+		appLabel: String,
+		sourceApkPaths: List<String>?,
+		appMinSdk: String = "?",
+		appTargetSdk: String = "?"
+	) {
 		val dialogView = layoutInflater.inflate(R.layout.dialog_clone_settings, null)
 		val labelEditText = dialogView.findViewById<EditText>(R.id.labelEditText)
 		val deepCloneCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.deepCloneCheckbox)
@@ -243,6 +329,14 @@ class MainActivity : AppCompatActivity() {
 		val pkgShimCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.pkgShimCheckbox)
 		val minSdkEditText = dialogView.findViewById<EditText>(R.id.minSdkEditText)
 		val targetSdkEditText = dialogView.findViewById<EditText>(R.id.targetSdkEditText)
+		val customPackageEditText = dialogView.findViewById<EditText>(R.id.customPackageEditText)
+		val actionRadioGroup = dialogView.findViewById<RadioGroup>(R.id.actionRadioGroup)
+		val minSdkLayout = dialogView.findViewById<TextInputLayout>(R.id.minSdkLayout)
+		val targetSdkLayout = dialogView.findViewById<TextInputLayout>(R.id.targetSdkLayout)
+
+		val saveLocationSection = dialogView.findViewById<LinearLayout>(R.id.saveLocationSection)
+		val saveLocationText = dialogView.findViewById<TextView>(R.id.saveLocationText)
+		val browseButton = dialogView.findViewById<View>(R.id.browseButton)
 
 		val compatibilityHeader = dialogView.findViewById<LinearLayout>(R.id.compatibilityHeader)
 		val compatibilityContent = dialogView.findViewById<LinearLayout>(R.id.compatibilityContent)
@@ -250,6 +344,10 @@ class MainActivity : AppCompatActivity() {
 		val manifestHeader = dialogView.findViewById<LinearLayout>(R.id.manifestHeader)
 		val manifestContent = dialogView.findViewById<LinearLayout>(R.id.manifestContent)
 		val manifestChevron = dialogView.findViewById<TextView>(R.id.manifestChevron)
+
+		// Reset save-location state for this fresh dialog
+		pendingSaveUri = null
+		pendingSaveLocationView = saveLocationText
 
 		compatibilityHeader.setOnClickListener {
 			val expanded = compatibilityContent.visibility == View.VISIBLE
@@ -263,7 +361,21 @@ class MainActivity : AppCompatActivity() {
 			manifestChevron.text = if (expanded) "▸" else "▾"
 		}
 
+		// Show/hide the save-location row based on whether a save option is selected
+		actionRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+			val isSaveOption = checkedId == R.id.radioSave || checkedId == R.id.radioInstallAndSave
+			saveLocationSection.visibility = if (isSaveOption) View.VISIBLE else View.GONE
+		}
+
+		browseButton.setOnClickListener {
+			saveLocationLauncher.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
+		}
+
 		labelEditText.setText("$appLabel Clone")
+
+		// Populate SDK helper text so the user knows what they're overriding
+		minSdkLayout.helperText = "Current: $appMinSdk — leave blank to keep"
+		targetSdkLayout.helperText = "Current: $appTargetSdk — leave blank to keep"
 
 		deepCloneCheckbox.setOnCheckedChangeListener { _, isChecked ->
 			if (isChecked) dualDexCheckbox.isChecked = false
@@ -278,9 +390,32 @@ class MainActivity : AppCompatActivity() {
 			.setView(dialogView)
 			.setPositiveButton("Clone") { _, _ ->
 				cloneStarted = true
+
+				// Resolve new package name — use custom if provided and valid
+				val customPkg = customPackageEditText.text.toString().trim()
+				val newPkg = when {
+					customPkg.isNotEmpty() && isValidPackageName(customPkg) -> customPkg
+					customPkg.isNotEmpty() -> {
+						Toast.makeText(
+							this,
+							"Invalid package name — using auto-generated",
+							Toast.LENGTH_SHORT
+						).show()
+						generateUniquePackageName(packageName)
+					}
+					else -> generateUniquePackageName(packageName)
+				}
+
+				// Resolve save/install action from radio group
+				val (saveToStorage, installAfterBuild) = when (actionRadioGroup.checkedRadioButtonId) {
+					R.id.radioSave -> Pair(true, false)
+					R.id.radioInstallAndSave -> Pair(true, true)
+					else -> Pair(false, true)
+				}
+
 				val settings = CloneSettings(
 					sourcePackageName = packageName,
-					newPackageName = generateUniquePackageName(packageName),
+					newPackageName = newPkg,
 					cloneLabel = labelEditText.text.toString().trim()
 						.takeIf { it.isNotEmpty() } ?: "$appLabel Clone",
 					deepClone = deepCloneCheckbox.isChecked,
@@ -289,12 +424,16 @@ class MainActivity : AppCompatActivity() {
 					pkgShim = pkgShimCheckbox.isChecked,
 					overrideMinSdk = minSdkEditText.text.toString().trim().toIntOrNull(),
 					overrideTargetSdk = targetSdkEditText.text.toString().trim().toIntOrNull(),
-					sourceApkPaths = sourceApkPaths
+					sourceApkPaths = sourceApkPaths,
+					saveToStorage = saveToStorage,
+					installAfterBuild = installAfterBuild,
+					saveLocationUri = pendingSaveUri?.toString()
 				)
 				startCloning(settings)
 			}
 			.setNegativeButton("Cancel", null)
 			.setOnDismissListener {
+				pendingSaveLocationView = null  // avoid stale reference after dialog closes
 				if (!cloneStarted && sourceApkPaths != null) {
 					try {
 						sourceApkPaths.forEach { File(it).delete() }
@@ -314,7 +453,7 @@ class MainActivity : AppCompatActivity() {
 			if (!isPackageInstalled(candidate)) return candidate
 			n++
 		}
-		return base  // safety valve: give up and let the installer reject the collision
+		return base
 	}
 
 	private fun isPackageInstalled(packageName: String): Boolean {
@@ -327,19 +466,21 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun startCloning(settings: CloneSettings) {
-		// Check install permission first
-		val installer = ApkInstaller(this)
-		if (!installer.canInstallPackages()) {
-			val permIntent = installer.getInstallPermissionIntent()
-			if (permIntent != null) {
-				Toast.makeText(
-					this,
-					"Please enable 'Install unknown apps' for APK Cloner",
-					Toast.LENGTH_LONG
-				).show()
-				pendingCloneSettings = settings
-				installPermissionLauncher.launch(permIntent)
-				return
+		// Only need install-packages permission when actually installing
+		if (settings.installAfterBuild) {
+			val installer = ApkInstaller(this)
+			if (!installer.canInstallPackages()) {
+				val permIntent = installer.getInstallPermissionIntent()
+				if (permIntent != null) {
+					Toast.makeText(
+						this,
+						"Please enable 'Install unknown apps' for APK Cloner",
+						Toast.LENGTH_LONG
+					).show()
+					pendingCloneSettings = settings
+					installPermissionLauncher.launch(permIntent)
+					return
+				}
 			}
 		}
 

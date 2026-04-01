@@ -1,11 +1,18 @@
 ﻿package com.guber.apkcloner.engine
 
+import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
 import android.os.Build
+import android.os.Environment
+import android.provider.DocumentsContract
+import android.provider.MediaStore
 import com.guber.apkcloner.util.FileUtils
 import com.guber.apkcloner.util.KeystoreUtils
 import java.io.File
+import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 
 class CloneEngine(private val context: Context) {
 
@@ -192,18 +199,89 @@ class CloneEngine(private val context: Context) {
 				onProgress("Split APKs processed", 90)
 			}
 
-			// ── Step 7: Install ─────────────────────────────────────── 100%
-			onProgress("Installing...", 93)
-			val installer = ApkInstaller(context)
-			if (allSignedApks.size == 1) {
-				installer.install(signedApk, settings.newPackageName)
-			} else {
-				installer.installMultiApk(allSignedApks, settings.newPackageName)
+			// ── Step 7a: Save to storage (if requested) ─────────────── 88-92%
+			if (settings.saveToStorage) {
+				onProgress("Saving APK to storage...", 88)
+				saveApkToStorage(allSignedApks, settings.cloneLabel, settings.saveLocationUri)
+				onProgress("APK saved to Downloads", 92)
 			}
-			onProgress("Done!", 100)
+
+			// ── Step 7b: Install (if requested) ─────────────────────── 100%
+			if (settings.installAfterBuild) {
+				onProgress("Installing...", 93)
+				val installer = ApkInstaller(context)
+				if (allSignedApks.size == 1) {
+					installer.install(signedApk, settings.newPackageName)
+				} else {
+					installer.installMultiApk(allSignedApks, settings.newPackageName)
+				}
+				onProgress("Done!", 100)
+			} else {
+				onProgress("Complete!", 100)
+			}
 
 		} finally {
 			try { FileUtils.cleanupWorkDir(workDir) } catch (_: Exception) { }
+		}
+	}
+
+	private fun saveApkToStorage(apks: List<File>, label: String, saveLocationUri: String?) {
+		val safeName = label.replace(Regex("[^a-zA-Z0-9._\\-]"), "_")
+		if (apks.size == 1) {
+			writeToStorage(apks[0], "$safeName.apk", "application/vnd.android.package-archive", saveLocationUri)
+		} else {
+			// Bundle all splits into a single ZIP so they stay together and can be re-imported
+			val tempZip = File(context.cacheDir, "save_temp_${System.currentTimeMillis()}.zip")
+			try {
+				zipApks(apks, tempZip)
+				writeToStorage(tempZip, "$safeName.zip", "application/zip", saveLocationUri)
+			} finally {
+				tempZip.delete()
+			}
+		}
+	}
+
+	private fun zipApks(files: List<File>, dest: File) {
+		ZipOutputStream(dest.outputStream().buffered()).use { zip ->
+			for ((index, file) in files.withIndex()) {
+				val entryName = if (index == 0) "base.apk" else "split_$index.apk"
+				zip.putNextEntry(ZipEntry(entryName))
+				file.inputStream().use { it.copyTo(zip) }
+				zip.closeEntry()
+			}
+		}
+	}
+
+	private fun writeToStorage(file: File, fileName: String, mimeType: String, saveLocationUri: String?) {
+		if (saveLocationUri != null) {
+			val treeUri = Uri.parse(saveLocationUri)
+			val docId = DocumentsContract.getTreeDocumentId(treeUri)
+			val parentDocUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId)
+			val fileUri = DocumentsContract.createDocument(
+				context.contentResolver, parentDocUri, mimeType, fileName
+			) ?: throw IllegalStateException("Failed to create '$fileName' in selected folder")
+			context.contentResolver.openOutputStream(fileUri)?.use { out ->
+				file.inputStream().use { it.copyTo(out) }
+			}
+		} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+			val values = ContentValues().apply {
+				put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+				put(MediaStore.Downloads.MIME_TYPE, mimeType)
+				put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/APK Cloner")
+			}
+			val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+				?: throw IllegalStateException("Could not create file in Downloads: $fileName")
+			context.contentResolver.openOutputStream(uri)?.use { out ->
+				file.inputStream().use { it.copyTo(out) }
+			}
+		} else {
+			@Suppress("DEPRECATION")
+			val downloadsDir = File(
+				Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+				"APK Cloner"
+			)
+			downloadsDir.mkdirs()
+			file.copyTo(File(downloadsDir, fileName), overwrite = true)
 		}
 	}
 

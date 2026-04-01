@@ -1,6 +1,7 @@
 package com.guber.apkcloner.ui
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -31,6 +32,7 @@ class AppListAdapter(
 			binding.appIcon.setImageDrawable(appInfo.icon)
 			binding.appName.text = appInfo.label
 			binding.packageName.text = appInfo.packageName
+			binding.cloneBadge.visibility = if (appInfo.isClone) View.VISIBLE else View.GONE
 
 			binding.root.setOnClickListener {
 				onAppClick(appInfo)

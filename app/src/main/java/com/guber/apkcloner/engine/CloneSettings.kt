@@ -12,7 +12,10 @@ data class CloneSettings(
 	val pkgShim: Boolean = false,
 	val overrideMinSdk: Int? = null,
 	val overrideTargetSdk: Int? = null,
-	val sourceApkPaths: List<String>? = null
+	val sourceApkPaths: List<String>? = null,
+	val saveToStorage: Boolean = false,
+	val installAfterBuild: Boolean = true,
+	val saveLocationUri: String? = null
 ) : Serializable {
 
 	companion object {
