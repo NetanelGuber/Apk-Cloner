@@ -22,6 +22,7 @@ import com.guber.apkcloner.engine.ApkInstaller
 import com.guber.apkcloner.engine.CloneEngine
 import com.guber.apkcloner.engine.CloneSettings
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.PrintWriter
@@ -164,6 +165,8 @@ class CloneProgressViewModel(application: Application) : AndroidViewModel(applic
 						progress.value = pct
 					}
 				}
+			} catch (e: CancellationException) {
+				throw e
 			} catch (e: Exception) {
 				val sw = StringWriter()
 				e.printStackTrace(PrintWriter(sw))

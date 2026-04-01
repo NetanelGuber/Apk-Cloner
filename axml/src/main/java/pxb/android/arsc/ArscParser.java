@@ -301,10 +301,25 @@ public class ArscParser implements ResConst {
                             int idx    = in.getShort() & 0xFFFF;
                             int offset = in.getShort() & 0xFFFF;
                             int savedPos = in.position();
-                            in.position(chunk.location + entriesStart + offset);
+                            in.position(chunk.location + entriesStart + offset * 4);
                             ResSpec spec = t.getSpec(idx);
                             readEntry(config, spec);
                             in.position(savedPos);
+                        }
+                    } else if ((typeFlags & 0x02) != 0) {
+                        // FLAG_OFFSET16 (API 31+): 16-bit offsets in 4-byte units; 0xFFFF = no entry.
+                        int[] entrys = new int[entryCount];
+                        for (int i = 0; i < entryCount; i++) {
+                            int raw = in.getShort() & 0xFFFF;
+                            entrys[i] = (raw == 0xFFFF) ? -1 : raw * 4;
+                        }
+                        D("[%08x]read config entrys (offset16)", in.position());
+                        for (int i = 0; i < entrys.length; i++) {
+                            if (entrys[i] != -1) {
+                                in.position(chunk.location + entriesStart + entrys[i]);
+                                ResSpec spec = t.getSpec(i);
+                                readEntry(config, spec);
+                            }
                         }
                     } else {
                         int[] entrys = new int[entryCount];

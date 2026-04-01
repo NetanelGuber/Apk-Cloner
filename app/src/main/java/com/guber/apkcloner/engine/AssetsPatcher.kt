@@ -43,8 +43,11 @@ internal fun String.replaceBounded(old: String, new: String): String {
 	var idx = indexOf(old, start)
 	while (idx >= 0) {
 		val afterIdx = idx + old.length
+		val beforeChar = getOrNull(idx - 1)
 		val afterChar = getOrNull(afterIdx)
-		if (afterChar == null || (!afterChar.isLetterOrDigit() && afterChar != '_')) {
+		val leftOk = beforeChar == null || (!beforeChar.isLetterOrDigit() && beforeChar != '_')
+		val rightOk = afterChar == null || (!afterChar.isLetterOrDigit() && afterChar != '_')
+		if (leftOk && rightOk) {
 			// Boundary check passed — safe to replace
 			sb.append(this, start, idx).append(new)
 			start = afterIdx

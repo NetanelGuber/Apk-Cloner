@@ -76,7 +76,7 @@ public class StringItems extends ArrayList<StringItem> {
         int length = in.getShort() & 0xFFFF;
 
         if (length > 0x7FFF) {
-            length = ((length & 0x7FFF) << 8) | (in.getShort() & 0xFFFF);
+            length = ((length & 0x7FFF) << 16) | (in.getShort() & 0xFFFF);
         }
         return length;
     }

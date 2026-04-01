@@ -37,7 +37,11 @@ class DualDexShimGenerator(
 		val appInfo: android.content.pm.ApplicationInfo
 
 		if (sourceApkPath != null) {
-			packageInfo = pm.getPackageArchiveInfo(sourceApkPath, flags) ?: return null
+			packageInfo = pm.getPackageArchiveInfo(sourceApkPath, flags)
+				?: throw IllegalStateException(
+					"Could not parse APK components for Dual DEX shim generation. " +
+					"Try using Deep Clone instead."
+				)
 			appInfo = packageInfo.applicationInfo ?: return null
 			appInfo.sourceDir = sourceApkPath
 			appInfo.publicSourceDir = sourceApkPath

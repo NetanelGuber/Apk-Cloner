@@ -56,7 +56,7 @@ class MetadataPatcher(
 		return try {
 			val content = bytes.toString(Charsets.UTF_8)
 			if (!content.contains(oldPkg) && !content.contains(oldPath)) return null
-			content.replace(oldPkg, newPkg).replace(oldPath, newPath).toByteArray(Charsets.UTF_8)
+			content.replaceBounded(oldPkg, newPkg).replaceBounded(oldPath, newPath).toByteArray(Charsets.UTF_8)
 		} catch (_: Exception) {
 			null
 		}
