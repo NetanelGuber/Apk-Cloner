@@ -4,6 +4,13 @@ All notable changes to APK Cloner are documented here.
 
 ---
 
+## [0.4.1] - 2026-04-03
+
+### Fixed
+- "Open APK" button text now correctly centered.
+
+---
+
 ## [0.4.0] - 2026-04-03
 
 ### Added

@@ -44,7 +44,11 @@
 			android:layout_height="wrap_content"
 			android:layout_gravity="bottom|end"
 			android:layout_margin="16dp"
-			android:text="Open APK" />
+			android:text="Open APK"
+			android:gravity="center"
+			android:paddingStart="20dp"
+			android:paddingEnd="20dp"
+			app:iconPadding="0dp" />
 
 		<ProgressBar
 			android:id="@+id/progressBar"

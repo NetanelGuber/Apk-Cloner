@@ -11,8 +11,8 @@ android {
 		applicationId 'com.guber.apkcloner'
 		minSdk 21
 		targetSdk 28
-		versionCode 14
-		versionName '0.4.0'
+		versionCode 15
+		versionName '0.4.1'
 	}
 
 	buildFeatures {
