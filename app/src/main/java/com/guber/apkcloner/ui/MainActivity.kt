@@ -740,19 +740,20 @@ class MainActivity : AppCompatActivity() {
 
 	// ── Self-update (Feature 4) ───────────────────────────────────────────────
 
-	private fun isWifiConnected(): Boolean {
+	private fun isNetworkConnected(): Boolean {
 		val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 		return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			cm.getNetworkCapabilities(cm.activeNetwork)
-				?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+			val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
+			caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+				caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
 		} else {
 			@Suppress("DEPRECATION")
-			cm.activeNetworkInfo?.type == ConnectivityManager.TYPE_WIFI
+			cm.activeNetworkInfo?.isConnected == true
 		}
 	}
 
 	private fun checkForAppUpdate() {
-		if (!isWifiConnected()) return
+		if (!isNetworkConnected()) return
 		lifecycleScope.launch(Dispatchers.IO) {
 			val info = UpdateChecker.fetchLatestRelease() ?: return@launch
 			if (!UpdateChecker.isNewerVersion(info.tagName, BuildConfig.VERSION_NAME)) return@launch

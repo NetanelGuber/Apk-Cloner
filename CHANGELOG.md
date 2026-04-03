@@ -4,6 +4,13 @@ All notable changes to APK Cloner are documented here.
 
 ---
 
+## [0.4.2] - 2026-04-03
+
+### Fixed
+- Self-update check now runs on mobile data in addition to Wi-Fi.
+
+---
+
 ## [0.4.1] - 2026-04-03
 
 ### Fixed
