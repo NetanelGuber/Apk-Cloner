@@ -10,7 +10,8 @@ import com.guber.apkcloner.databinding.ItemAppBinding
 import com.guber.apkcloner.util.PackageUtils
 
 class AppListAdapter(
-	private val onAppClick: (PackageUtils.AppInfo) -> Unit
+	private val onAppClick: (PackageUtils.AppInfo) -> Unit,
+	private val onUpdateClick: (PackageUtils.AppInfo) -> Unit = {}
 ) : ListAdapter<PackageUtils.AppInfo, AppListAdapter.AppViewHolder>(AppDiffCallback()) {
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AppViewHolder {
@@ -33,6 +34,8 @@ class AppListAdapter(
 			binding.appName.text = appInfo.label
 			binding.packageName.text = appInfo.packageName
 			binding.cloneBadge.visibility = if (appInfo.isClone) View.VISIBLE else View.GONE
+			binding.updateButton.visibility = if (appInfo.updateAvailable) View.VISIBLE else View.GONE
+			binding.updateButton.setOnClickListener { onUpdateClick(appInfo) }
 
 			binding.root.setOnClickListener {
 				onAppClick(appInfo)

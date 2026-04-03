@@ -9,3 +9,4 @@ build/
 local.properties
 *.iml
 .idea/
+gradle.properties

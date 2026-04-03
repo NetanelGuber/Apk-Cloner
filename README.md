@@ -2,7 +2,7 @@
 
 Android tool that clones installed apps (or imported APK/APKM/XAPK files) into independently-runnable copies with a different package name — no root required.
 
-**Version:** 0.3.0 · **Min SDK:** 21 (Android 5.0) · **Target SDK:** 28
+**Version:** 0.4.0 · **Min SDK:** 21 (Android 5.0) · **Target SDK:** 28
 
 ---
 
@@ -17,8 +17,18 @@ Android tool that clones installed apps (or imported APK/APKM/XAPK files) into i
 - **Native lib patching** — binary C-string replacement in `.so` files
 - **SDK override** — lower min/target SDK to bypass API restrictions
 - **Icon color customisation** — adjust hue, saturation, and contrast of the cloned app's launcher icon; live preview in the clone dialog
-- Save output APK/ZIP to storage or install directly via `PackageInstaller`
+- Save output as `.apk` (single) or `.apkm` bundle (splits) to storage, or install directly via `PackageInstaller`
+- Saved `.apkm` bundles include `info.json` metadata and `icon.png` so file managers display the app icon
 - Dark mode support
+
+### Clone Management (v0.4.0)
+
+- **Clones tab** — two-tab layout ("All Apps" / "Clones") for instant access to cloned apps without scrolling
+- **Update detection** — on startup each clone is compared against its original app's version; an UPDATE button appears inline when a newer version is available
+- **One-tap update** — tapping UPDATE reopens the clone dialog with every setting from the original clone pre-filled (icon adjustments, DEX strategy, SDK overrides, custom package name, etc.) so the update uses identical settings automatically
+- **Persistent clone settings** — all clone configuration is saved to internal storage per clone and recalled whenever an update is triggered
+- **In-app self-update** — on Wi-Fi, the app checks [GitHub Releases](https://github.com/NetanelGuber/Apk-Cloner/releases) on startup; if a newer version is available a dialog shows the changelog with options to install the update or skip it until the next release
+- **Auto-refresh** — app list reloads automatically after returning from any clone or update operation
 
 ## How It Works
 
@@ -55,7 +65,7 @@ All three layers apply the same BT.601 luminance-preserving hue-rotation matrix 
 
 ## Building
 
-Requirements: Android Studio / Gradle, JDK 17+
+Requirements: Android Studio / Gradle, JDK 17–22
 
 ```bash
 ./gradlew assembleDebug
@@ -76,6 +86,8 @@ Install to connected device:
 | `REQUEST_DELETE_PACKAGES` | Allow uninstall prompts |
 | `READ_EXTERNAL_STORAGE` | Import APK files on Android < 10 |
 | `WRITE_EXTERNAL_STORAGE` | Save output APKs on Android < 10 |
+| `INTERNET` | Check GitHub Releases for app updates |
+| `ACCESS_NETWORK_STATE` | Detect Wi-Fi before checking for updates |
 
 ## Project Structure
 
@@ -107,9 +119,11 @@ app/src/main/java/com/guber/apkcloner/
 │   ├── CloneProgressActivity.kt
 │   └── AppListAdapter.kt
 └── util/
-    ├── FileUtils.kt            # Work dir management, space checks
-    ├── KeystoreUtils.kt        # BouncyCastle keystore/cert generation
-    └── PackageUtils.kt         # Installed app enumeration
+    ├── FileUtils.kt                 # Work dir management, space checks
+    ├── KeystoreUtils.kt             # BouncyCastle keystore/cert generation
+    ├── PackageUtils.kt              # Installed app enumeration + update detection
+    ├── CloneSettingsRepository.kt   # Persists/restores per-clone settings as JSON
+    └── UpdateChecker.kt             # GitHub Releases API client + semver comparison
 
 axml/                           # Forked pxb.android AXML/ARSC parser+writer (Java)
 ```

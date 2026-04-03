@@ -2,6 +2,10 @@
 
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -9,9 +13,11 @@ import android.provider.DocumentsContract
 import android.provider.MediaStore
 import com.guber.apkcloner.util.FileUtils
 import com.guber.apkcloner.util.KeystoreUtils
+import org.json.JSONObject
 import pxb.android.axml.Axml
 import pxb.android.axml.AxmlReader
 import pxb.android.axml.NodeVisitor
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
@@ -318,19 +324,83 @@ class CloneEngine(private val context: Context) {
 		if (apks.size == 1) {
 			writeToStorage(apks[0], "$safeName.apk", "application/vnd.android.package-archive", saveLocationUri)
 		} else {
-			// Bundle all splits into a single ZIP so they stay together and can be re-imported
+			// Bundle all splits into a valid .apkm archive (ZIP + info.json + icon.png)
 			val tempZip = File(context.cacheDir, "save_temp_${System.currentTimeMillis()}.zip")
 			try {
-				zipApks(apks, tempZip)
-				writeToStorage(tempZip, "$safeName.zip", "application/zip", saveLocationUri)
+				val (infoJson, iconPng) = buildApkmMetadata(apks[0], label)
+				zipApks(apks, tempZip, infoJson, iconPng)
+				writeToStorage(tempZip, "$safeName.apkm", "application/octet-stream", saveLocationUri)
 			} finally {
 				tempZip.delete()
 			}
 		}
 	}
 
-	private fun zipApks(files: List<File>, dest: File) {
+	private fun buildApkmMetadata(baseApk: File, label: String): Pair<String, ByteArray?> {
+		val pm = context.packageManager
+		@Suppress("DEPRECATION")
+		val pkgInfo = pm.getPackageArchiveInfo(baseApk.absolutePath, 0)
+		val appInfo = pkgInfo?.applicationInfo?.also {
+			it.sourceDir = baseApk.absolutePath
+			it.publicSourceDir = baseApk.absolutePath
+		}
+
+		val pname = pkgInfo?.packageName ?: ""
+		val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+			pkgInfo?.longVersionCode ?: 0L
+		} else {
+			@Suppress("DEPRECATION") pkgInfo?.versionCode?.toLong() ?: 0L
+		}
+		val versionName = pkgInfo?.versionName ?: ""
+		val minApi = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			appInfo?.minSdkVersion ?: 1
+		} else 1
+
+		val infoJson = JSONObject().apply {
+			put("apkm_version", "1")
+			put("pname", pname)
+			put("app_name", label)
+			put("release_version", versionName)
+			put("versioncode", versionCode.toString())
+			put("min_api", minApi.toString())
+		}.toString()
+
+		val iconPng: ByteArray? = try {
+			appInfo?.loadIcon(pm)?.let { drawableToPng(it) }
+		} catch (_: Exception) { null }
+
+		return Pair(infoJson, iconPng)
+	}
+
+	private fun drawableToPng(drawable: Drawable): ByteArray {
+		val bitmap = if (drawable is BitmapDrawable && drawable.bitmap != null) {
+			drawable.bitmap
+		} else {
+			val w = drawable.intrinsicWidth.takeIf { it > 0 } ?: 192
+			val h = drawable.intrinsicHeight.takeIf { it > 0 } ?: 192
+			Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { bm ->
+				val canvas = Canvas(bm)
+				drawable.setBounds(0, 0, canvas.width, canvas.height)
+				drawable.draw(canvas)
+			}
+		}
+		return ByteArrayOutputStream().also { out ->
+			bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+		}.toByteArray()
+	}
+
+	private fun zipApks(files: List<File>, dest: File, infoJson: String? = null, iconPng: ByteArray? = null) {
 		ZipOutputStream(dest.outputStream().buffered()).use { zip ->
+			if (infoJson != null) {
+				zip.putNextEntry(ZipEntry("info.json"))
+				zip.write(infoJson.toByteArray(Charsets.UTF_8))
+				zip.closeEntry()
+			}
+			if (iconPng != null) {
+				zip.putNextEntry(ZipEntry("icon.png"))
+				zip.write(iconPng)
+				zip.closeEntry()
+			}
 			for ((index, file) in files.withIndex()) {
 				val entryName = if (index == 0) "base.apk" else "split_$index.apk"
 				zip.putNextEntry(ZipEntry(entryName))

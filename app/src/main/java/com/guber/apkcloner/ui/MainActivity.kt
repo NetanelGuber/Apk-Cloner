@@ -1,11 +1,14 @@
 package com.guber.apkcloner.ui
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.drawable.Drawable
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -24,22 +27,30 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.TextInputLayout
+import com.guber.apkcloner.BuildConfig
 import com.guber.apkcloner.R
 import com.guber.apkcloner.databinding.ActivityMainBinding
 import com.guber.apkcloner.engine.ApkInstaller
 import com.guber.apkcloner.engine.CloneSettings
 import com.guber.apkcloner.engine.FileApkParser
+import com.guber.apkcloner.util.CloneSettingsRepository
 import com.guber.apkcloner.util.PackageUtils
+import com.guber.apkcloner.util.ReleaseInfo
+import com.guber.apkcloner.util.UpdateChecker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.activity.result.contract.ActivityResultContracts
 import java.io.File
+import java.io.FileOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -99,6 +110,8 @@ class MainActivity : AppCompatActivity() {
 	private lateinit var adapter: AppListAdapter
 	private var allApps: List<PackageUtils.AppInfo> = emptyList()
 	private var pendingCloneSettings: CloneSettings? = null
+	private var showOnlyClones = false
+	private var currentQuery = ""
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -108,9 +121,10 @@ class MainActivity : AppCompatActivity() {
 		setSupportActionBar(binding.toolbar)
 		supportActionBar?.title = "APK Cloner"
 
-		adapter = AppListAdapter { appInfo ->
-			onAppSelected(appInfo)
-		}
+		adapter = AppListAdapter(
+			onAppClick = { appInfo -> onAppSelected(appInfo) },
+			onUpdateClick = { appInfo -> onUpdateClick(appInfo) }
+		)
 		binding.recyclerView.layoutManager = LinearLayoutManager(this)
 		binding.recyclerView.adapter = adapter
 
@@ -118,7 +132,30 @@ class MainActivity : AppCompatActivity() {
 			openFilePicker()
 		}
 
+		binding.tabLayout.addTab(binding.tabLayout.newTab().setText("All Apps"))
+		binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Clones"))
+		binding.tabLayout.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
+			override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab) {
+				showOnlyClones = tab.position == 1
+				filterApps()
+			}
+			override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab) {}
+			override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab) {}
+		})
+
 		checkPermissionsAndLoad()
+		checkForAppUpdate()
+	}
+
+	private var isFirstResume = true
+
+	override fun onResume() {
+		super.onResume()
+		if (isFirstResume) {
+			isFirstResume = false
+		} else {
+			loadApps()
+		}
 	}
 
 	override fun onPrepareOptionsMenu(menu: Menu): Boolean {
@@ -140,7 +177,8 @@ class MainActivity : AppCompatActivity() {
 		searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 			override fun onQueryTextSubmit(query: String?) = false
 			override fun onQueryTextChange(newText: String?): Boolean {
-				filterApps(newText ?: "")
+				currentQuery = newText ?: ""
+				filterApps()
 				return true
 			}
 		})
@@ -168,24 +206,22 @@ class MainActivity : AppCompatActivity() {
 		}
 	}
 
+	private fun filterApps() {
+		var list = allApps
+		if (showOnlyClones) list = list.filter { it.isClone }
+		if (currentQuery.isNotEmpty()) list = list.filter {
+			it.label.contains(currentQuery, ignoreCase = true) ||
+				it.packageName.contains(currentQuery, ignoreCase = true)
+		}
+		adapter.submitList(list)
+	}
+
 	private fun openFilePicker() {
 		val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
 			addCategory(Intent.CATEGORY_OPENABLE)
 			type = "*/*"
 		}
 		filePickerLauncher.launch(intent)
-	}
-
-	private fun filterApps(query: String) {
-		if (query.isEmpty()) {
-			adapter.submitList(allApps)
-		} else {
-			val filtered = allApps.filter {
-				it.label.contains(query, ignoreCase = true) ||
-					it.packageName.contains(query, ignoreCase = true)
-			}
-			adapter.submitList(filtered)
-		}
 	}
 
 	private fun checkPermissionsAndLoad() {
@@ -222,11 +258,27 @@ class MainActivity : AppCompatActivity() {
 
 		lifecycleScope.launch(Dispatchers.IO) {
 			val apps = PackageUtils.getInstalledApps(this@MainActivity)
+
+			// Second pass: check for available updates on cloned apps
+			val repo = CloneSettingsRepository(this@MainActivity)
+			val appsWithUpdates = apps.map { app ->
+				if (app.isClone) {
+					val saved = repo.load(app.packageName)
+					if (saved != null) {
+						try {
+							val originalVer = getVersionCode(saved.sourcePackageName)
+							val cloneVer = getVersionCode(app.packageName)
+							app.copy(updateAvailable = originalVer > cloneVer)
+						} catch (_: Exception) { app }
+					} else app
+				} else app
+			}
+
 			withContext(Dispatchers.Main) {
-				allApps = apps
-				adapter.submitList(apps)
+				allApps = appsWithUpdates
+				filterApps()
 				binding.progressBar.visibility = View.GONE
-				if (apps.isEmpty()) {
+				if (appsWithUpdates.isEmpty()) {
 					binding.emptyView.visibility = View.VISIBLE
 				} else {
 					binding.recyclerView.visibility = View.VISIBLE
@@ -235,9 +287,35 @@ class MainActivity : AppCompatActivity() {
 		}
 	}
 
+	private fun getVersionCode(packageName: String): Long {
+		return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+			packageManager.getPackageInfo(packageName, 0).longVersionCode
+		} else {
+			@Suppress("DEPRECATION")
+			packageManager.getPackageInfo(packageName, 0).versionCode.toLong()
+		}
+	}
+
 	private fun onAppSelected(appInfo: PackageUtils.AppInfo) {
 		val (minSdk, targetSdk) = readAppSdkInfo(appInfo.packageName, null)
 		showCloneDialog("Clone ${appInfo.label}", appInfo.packageName, appInfo.label, null, minSdk, targetSdk)
+	}
+
+	private fun onUpdateClick(appInfo: PackageUtils.AppInfo) {
+		val saved = CloneSettingsRepository(this).load(appInfo.packageName) ?: run {
+			Toast.makeText(this, "No saved settings found for this clone.", Toast.LENGTH_SHORT).show()
+			return
+		}
+		val (minSdk, targetSdk) = readAppSdkInfo(saved.sourcePackageName, null)
+		showCloneDialog(
+			"Update ${appInfo.label}",
+			saved.sourcePackageName,
+			appInfo.label,
+			null,
+			minSdk,
+			targetSdk,
+			savedSettings = saved
+		)
 	}
 
 	private fun onFileSelected(uri: Uri) {
@@ -303,12 +381,10 @@ class MainActivity : AppCompatActivity() {
 
 	/**
 	 * Converts a folder tree URI (from ACTION_OPEN_DOCUMENT_TREE) into a short human-readable label.
-	 * e.g. content://...tree/primary%3ADownload%2FMy+Folder → "Download/My Folder"
 	 */
 	private fun getFolderDisplayName(uri: Uri): String {
 		return try {
 			val segment = uri.lastPathSegment ?: return "Selected folder"
-			// Segment is "primary:Folder/Subfolder" or "storage-id:Folder"
 			segment.substringAfter(':').ifEmpty { "Selected folder" }
 		} catch (_: Exception) {
 			"Selected folder"
@@ -326,7 +402,8 @@ class MainActivity : AppCompatActivity() {
 		appLabel: String,
 		sourceApkPaths: List<String>?,
 		appMinSdk: String = "?",
-		appTargetSdk: String = "?"
+		appTargetSdk: String = "?",
+		savedSettings: CloneSettings? = null
 	) {
 		val dialogView = layoutInflater.inflate(R.layout.dialog_clone_settings, null)
 		val labelEditText = dialogView.findViewById<EditText>(R.id.labelEditText)
@@ -382,8 +459,9 @@ class MainActivity : AppCompatActivity() {
 
 		// ── Icon section ──────────────────────────────────────────────────────
 
-		// Load the app icon for the preview
-		val originalIcon: Drawable? = loadAppIcon(packageName, sourceApkPaths)
+		// Load the app icon for the preview (use sourcePackageName when updating)
+		val iconPackage = savedSettings?.sourcePackageName ?: packageName
+		val originalIcon: Drawable? = loadAppIcon(iconPackage, sourceApkPaths)
 		iconPreview.setImageDrawable(originalIcon)
 
 		iconHeader.setOnClickListener {
@@ -430,8 +508,6 @@ class MainActivity : AppCompatActivity() {
 			saveLocationLauncher.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
 		}
 
-		labelEditText.setText("$appLabel Clone")
-
 		// Populate SDK helper text so the user knows what they're overriding
 		minSdkLayout.helperText = "Current: $appMinSdk — leave blank to keep"
 		targetSdkLayout.helperText = "Current: $appTargetSdk — leave blank to keep"
@@ -441,6 +517,53 @@ class MainActivity : AppCompatActivity() {
 		}
 		dualDexCheckbox.setOnCheckedChangeListener { _, isChecked ->
 			if (isChecked) deepCloneCheckbox.isChecked = false
+		}
+
+		// ── Pre-fill from saved settings (used when updating a clone) ─────────
+		if (savedSettings != null) {
+			labelEditText.setText(savedSettings.cloneLabel)
+			deepCloneCheckbox.isChecked = savedSettings.deepClone
+			dualDexCheckbox.isChecked = savedSettings.dualDex
+			patchNativeCheckbox.isChecked = savedSettings.patchNativeLibs
+			pkgShimCheckbox.isChecked = savedSettings.pkgShim
+			minSdkEditText.setText(savedSettings.overrideMinSdk?.toString() ?: "")
+			targetSdkEditText.setText(savedSettings.overrideTargetSdk?.toString() ?: "")
+			customPackageEditText.setText(savedSettings.newPackageName)
+			hueSlider.value = savedSettings.iconHue
+			saturationSlider.value = savedSettings.iconSaturation * 100f
+			contrastSlider.value = savedSettings.iconContrast * 100f
+
+			// Expand sections that have non-default values
+			val hasCompatOptions = savedSettings.deepClone || savedSettings.dualDex ||
+				savedSettings.patchNativeLibs || savedSettings.pkgShim
+			if (hasCompatOptions) {
+				compatibilityContent.visibility = View.VISIBLE
+				compatibilityChevron.text = "▾"
+			}
+			val hasManifestOptions = savedSettings.overrideMinSdk != null ||
+				savedSettings.overrideTargetSdk != null
+			if (hasManifestOptions) {
+				manifestContent.visibility = View.VISIBLE
+				manifestChevron.text = "▾"
+			}
+			val hasIconOptions = savedSettings.iconHue != 0f ||
+				savedSettings.iconSaturation != 0f || savedSettings.iconContrast != 0f
+			if (hasIconOptions) {
+				iconContent.visibility = View.VISIBLE
+				iconChevron.text = "▾"
+				refreshIconPreview()
+			}
+
+			// Restore radio selection
+			when {
+				savedSettings.saveToStorage && !savedSettings.installAfterBuild ->
+					actionRadioGroup.check(R.id.radioSave)
+				savedSettings.saveToStorage && savedSettings.installAfterBuild ->
+					actionRadioGroup.check(R.id.radioInstallAndSave)
+				else -> actionRadioGroup.check(R.id.radioInstall)
+			}
+		} else {
+			labelEditText.setText("$appLabel Clone")
 		}
 
 		var cloneStarted = false
@@ -491,6 +614,10 @@ class MainActivity : AppCompatActivity() {
 					iconSaturation = saturationSlider.value / 100f,
 					iconContrast = contrastSlider.value / 100f
 				)
+
+				// Persist settings so they can be recalled for future updates
+				CloneSettingsRepository(this).save(settings)
+
 				startCloning(settings)
 			}
 			.setNegativeButton("Cancel", null)
@@ -609,5 +736,102 @@ class MainActivity : AppCompatActivity() {
 			Intent(this, CloneProgressActivity::class.java)
 				.putExtra("settings", settings)
 		)
+	}
+
+	// ── Self-update (Feature 4) ───────────────────────────────────────────────
+
+	private fun isWifiConnected(): Boolean {
+		val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+		return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			cm.getNetworkCapabilities(cm.activeNetwork)
+				?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+		} else {
+			@Suppress("DEPRECATION")
+			cm.activeNetworkInfo?.type == ConnectivityManager.TYPE_WIFI
+		}
+	}
+
+	private fun checkForAppUpdate() {
+		if (!isWifiConnected()) return
+		lifecycleScope.launch(Dispatchers.IO) {
+			val info = UpdateChecker.fetchLatestRelease() ?: return@launch
+			if (!UpdateChecker.isNewerVersion(info.tagName, BuildConfig.VERSION_NAME)) return@launch
+			val skipped = getSharedPreferences("app_prefs", MODE_PRIVATE)
+				.getString("skipped_update_version", null)
+			if (skipped == info.tagName) return@launch
+			withContext(Dispatchers.Main) {
+				showSelfUpdateDialog(info)
+			}
+		}
+	}
+
+	private fun showSelfUpdateDialog(info: ReleaseInfo) {
+		AlertDialog.Builder(this)
+			.setTitle("Update available — ${info.tagName}")
+			.setMessage(info.changelog.ifBlank { "A new version is available." })
+			.setPositiveButton("Update") { _, _ ->
+				val url = info.apkUrl
+				if (url != null) {
+					downloadAndInstallUpdate(url)
+				} else {
+					Toast.makeText(this, "No APK found in this release.", Toast.LENGTH_LONG).show()
+				}
+			}
+			.setNegativeButton("Skip") { _, _ ->
+				getSharedPreferences("app_prefs", MODE_PRIVATE)
+					.edit().putString("skipped_update_version", info.tagName).apply()
+			}
+			.show()
+	}
+
+	private fun downloadAndInstallUpdate(url: String) {
+		val progressDialog = AlertDialog.Builder(this)
+			.setTitle("Downloading update…")
+			.setMessage("Please wait.")
+			.setCancelable(false)
+			.show()
+
+		lifecycleScope.launch(Dispatchers.IO) {
+			try {
+				val updateDir = File(cacheDir, "update")
+				updateDir.mkdirs()
+				val updateFile = File(updateDir, "app-update.apk")
+
+				val conn = URL(url).openConnection() as HttpURLConnection
+				conn.connectTimeout = 15_000
+				conn.readTimeout = 60_000
+				conn.connect()
+				conn.inputStream.use { input ->
+					FileOutputStream(updateFile).use { output ->
+						input.copyTo(output)
+					}
+				}
+				conn.disconnect()
+
+				withContext(Dispatchers.Main) {
+					progressDialog.dismiss()
+					val uri = FileProvider.getUriForFile(
+						this@MainActivity,
+						"${packageName}.fileprovider",
+						updateFile
+					)
+					val intent = Intent(Intent.ACTION_VIEW).apply {
+						setDataAndType(uri, "application/vnd.android.package-archive")
+						addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+						addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+					}
+					startActivity(intent)
+				}
+			} catch (e: Exception) {
+				withContext(Dispatchers.Main) {
+					progressDialog.dismiss()
+					Toast.makeText(
+						this@MainActivity,
+						"Download failed: ${e.message}",
+						Toast.LENGTH_LONG
+					).show()
+				}
+			}
+		}
 	}
 }

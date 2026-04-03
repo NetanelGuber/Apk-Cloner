@@ -25,7 +25,7 @@
         android:orientation="vertical"
         android:layout_marginStart="16dp">
 
-        <!-- App name row with optional CLONE badge -->
+        <!-- App name row with optional CLONE badge and UPDATE button -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -53,6 +53,22 @@
                 android:background="@drawable/badge_clone_bg"
                 android:paddingStart="6dp"
                 android:paddingEnd="6dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:layout_marginStart="8dp"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/updateButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="UPDATE"
+                android:textSize="10sp"
+                android:minHeight="0dp"
+                android:minWidth="0dp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
                 android:paddingTop="2dp"
                 android:paddingBottom="2dp"
                 android:layout_marginStart="8dp"

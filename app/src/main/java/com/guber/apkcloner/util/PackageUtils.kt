@@ -14,7 +14,8 @@ object PackageUtils {
 		val icon: Drawable,
 		val sourceDir: String,
 		val isSystemApp: Boolean,
-		val isClone: Boolean
+		val isClone: Boolean,
+		val updateAvailable: Boolean = false
 	)
 
 	fun getInstalledApps(context: Context, includeSystem: Boolean = false): List<AppInfo> {
