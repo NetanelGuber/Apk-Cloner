@@ -9,6 +9,9 @@ import android.provider.DocumentsContract
 import android.provider.MediaStore
 import com.guber.apkcloner.util.FileUtils
 import com.guber.apkcloner.util.KeystoreUtils
+import pxb.android.axml.Axml
+import pxb.android.axml.AxmlReader
+import pxb.android.axml.NodeVisitor
 import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
@@ -99,6 +102,79 @@ class CloneEngine(private val context: Context) {
 			} else null
 			onProgress("Resources patched", 50)
 
+			// Resolve the exact set of bitmap files to recolour:
+			//  1. Collect all paths for the icon/roundIcon resource IDs from ARSC.
+			//  2. Any of those paths that are adaptive-icon XML files (mipmap-anydpi-*)
+			//     are NOT themselves bitmaps — parse them to extract the foreground/
+			//     background layer resource IDs, then collect those paths from ARSC too.
+			//  3. Keep only bitmap paths (PNG/WebP); XML files are passed through intact
+			//     so ARSC references remain valid and Android doesn't show a placeholder.
+			val iconResIds = setOfNotNull(manifestResult.iconResourceId, manifestResult.roundIconResourceId)
+			// bitmapIconPaths — PNG/WebP files for IconPatcher
+			// vectorIconPaths — VectorDrawable XMLs for VectorColorPatcher
+			val bitmapIconPaths: Set<String>
+			val vectorIconPaths: Set<String>
+			var layerResIds = emptySet<Int>()
+			if (arscBytes != null && iconResIds.isNotEmpty()) {
+				val rp = ResourcePatcher()
+				val directPaths = rp.collectIconFilePaths(arscBytes, iconResIds)
+
+				// Parse any adaptive-icon XML entries to find their layer drawables
+				val mutableLayerResIds = mutableSetOf<Int>()
+				for (path in directPaths) {
+					if (!path.endsWith(".xml")) continue
+					val xmlBytes = extractEntry(workingApk, path) ?: continue
+					mutableLayerResIds += parseAdaptiveIconLayerResIds(xmlBytes)
+				}
+				layerResIds = mutableLayerResIds
+
+				val layerPaths = if (layerResIds.isNotEmpty()) {
+					rp.collectIconFilePaths(arscBytes, layerResIds)
+				} else emptySet()
+
+				// Bitmap paths go to IconPatcher; layer XML paths go to VectorColorPatcher
+				// (exclude the adaptive-icon wrapper XML itself — it has no color attrs)
+				bitmapIconPaths = (directPaths + layerPaths).filterTo(mutableSetOf()) { isBitmapPath(it) }
+				vectorIconPaths = layerPaths.filterTo(mutableSetOf()) { it.endsWith(".xml") }
+
+				// Extend layerResIds with @color/ references found inside the vector
+				// drawables.  Apps like Google Keep define ALL icon colors this way —
+				// as color resources in the ARSC rather than as inline ARGB values.
+				// Without this, VectorColorPatcher finds nothing to patch and the icon
+				// appears unchanged.  Mixing (some inline + some @color/) also causes
+				// the "icon looks incorrect" symptom, which this also fixes.
+				if (vectorIconPaths.isNotEmpty()) {
+					val vectorColorResIds = mutableSetOf<Int>()
+					for (path in vectorIconPaths) {
+						// Check the base APK first, then fall back to any split APK.
+						val xmlBytes = extractEntry(workingApk, path)
+							?: apkSet.splitApks.firstNotNullOfOrNull { extractEntry(it, path) }
+							?: continue
+						vectorColorResIds += collectColorRefsFromVector(xmlBytes)
+					}
+					if (vectorColorResIds.isNotEmpty()) {
+						layerResIds = layerResIds + vectorColorResIds
+					}
+				}
+			} else {
+				bitmapIconPaths = emptySet()
+				vectorIconPaths = emptySet()
+			}
+
+			// Patch icon layer colors that are direct ARSC integer values (e.g. background
+			// colors defined as <color> in values.xml — invisible to file-based patchers).
+			var finalArsc = patchedArsc
+			if (layerResIds.isNotEmpty() &&
+				(settings.iconHue != 0f || settings.iconSaturation != 0f || settings.iconContrast != 0f)) {
+				val base = patchedArsc ?: arscBytes
+				if (base != null) {
+					val colorPatched = ResourcePatcher().patchIconLayerColors(
+						base, layerResIds, settings.iconHue, settings.iconSaturation, settings.iconContrast
+					)
+					if (colorPatched !== base) finalArsc = colorPatched
+				}
+			}
+
 			// ── Step 4: DEX work ─────────────────────────────────────── 65%
 			val extraDexFiles = mutableListOf<ByteArray>()
 			if (settings.pkgShim) {
@@ -137,11 +213,18 @@ class CloneEngine(private val context: Context) {
 				}
 			}
 
+			// ── Step 4b: Patch icon (if adjustments requested) ─────── 66%
+			if (settings.iconHue != 0f || settings.iconSaturation != 0f || settings.iconContrast != 0f) {
+				onProgress("Patching icon...", 66)
+				IconPatcher().patch(workingApk, settings.iconHue, settings.iconSaturation, settings.iconContrast, bitmapIconPaths)
+				VectorColorPatcher().patch(workingApk, settings.iconHue, settings.iconSaturation, settings.iconContrast, vectorIconPaths)
+			}
+
 			// ── Step 5: Re-assemble base APK ────────────────────────── 75%
 			onProgress("Assembling APK...", 68)
 			val unsignedApk = File(workDir, "unsigned.apk")
 			ApkAssembler().assemble(
-				workingApk, manifestResult.bytes, patchedArsc, unsignedApk,
+				workingApk, manifestResult.bytes, finalArsc, unsignedApk,
 				settings.sourcePackageName, settings.newPackageName,
 				settings.patchNativeLibs, extraDexFiles
 			)
@@ -175,6 +258,11 @@ class CloneEngine(private val context: Context) {
 							settings.newPackageName,
 							minSdk
 						)
+					}
+
+					if (settings.iconHue != 0f || settings.iconSaturation != 0f || settings.iconContrast != 0f) {
+						IconPatcher().patch(splitApk, settings.iconHue, settings.iconSaturation, settings.iconContrast, bitmapIconPaths)
+						VectorColorPatcher().patch(splitApk, settings.iconHue, settings.iconSaturation, settings.iconContrast, vectorIconPaths)
 					}
 
 					val unsignedSplit = File(workDir, "unsigned_split_$i.apk")
@@ -301,5 +389,70 @@ class CloneEngine(private val context: Context) {
 			val entry = zip.getEntry(entryName) ?: return null
 			return zip.getInputStream(entry).readBytes()
 		}
+	}
+
+	/** True for PNG and WebP file paths. */
+	private fun isBitmapPath(path: String): Boolean {
+		val lower = path.lowercase()
+		return lower.endsWith(".png") || lower.endsWith(".webp")
+	}
+
+	companion object {
+		/** Attribute names in VectorDrawable XML that carry color values. */
+		private val VECTOR_COLOR_ATTR_NAMES = setOf(
+			"fillColor", "strokeColor", "color", "tint",
+			"startColor", "endColor", "centerColor", "solidColor"
+		)
+	}
+
+	/**
+	 * Parses a binary VectorDrawable AXML and returns every resource ID that
+	 * appears as a TYPE_REFERENCE value on a known color-type attribute
+	 * (fillColor, strokeColor, color, tint, startColor, endColor, centerColor,
+	 * solidColor).  These are @color/<name> references whose actual color values
+	 * live in resources.arsc and must be patched there rather than in the XML.
+	 */
+	private fun collectColorRefsFromVector(xmlBytes: ByteArray): Set<Int> {
+		return try {
+			val axml = Axml()
+			AxmlReader(xmlBytes).accept(axml)
+			val ids = mutableSetOf<Int>()
+			fun walk(node: Axml.Node) {
+				for (attr in node.attrs) {
+					if (attr.type == NodeVisitor.TYPE_REFERENCE &&
+						attr.name in VECTOR_COLOR_ATTR_NAMES &&
+						attr.value is Int && (attr.value as Int) != 0
+					) {
+						ids += attr.value as Int
+					}
+				}
+				node.children.forEach { walk(it) }
+			}
+			axml.firsts.forEach { walk(it) }
+			ids
+		} catch (_: Exception) { emptySet() }
+	}
+
+	/**
+	 * Parses a binary adaptive-icon XML (AXML) and returns the resource IDs
+	 * referenced by android:drawable attributes on the foreground/background nodes.
+	 */
+	private fun parseAdaptiveIconLayerResIds(xmlBytes: ByteArray): Set<Int> {
+		return try {
+			val axml = Axml()
+			AxmlReader(xmlBytes).accept(axml)
+			val ids = mutableSetOf<Int>()
+			fun walk(node: Axml.Node) {
+				for (attr in node.attrs) {
+					if (attr.name == "drawable") {
+						val v = attr.value
+						if (v is Int && v != 0) ids += v
+					}
+				}
+				node.children.forEach { walk(it) }
+			}
+			axml.firsts.forEach { walk(it) }
+			ids
+		} catch (_: Exception) { emptySet() }
 	}
 }

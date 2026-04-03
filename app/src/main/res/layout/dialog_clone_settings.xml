@@ -27,6 +27,121 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- ── Icon section header ─────────────────────────────────────── -->
+        <LinearLayout
+            android:id="@+id/iconHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Icon"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:textColor="?android:textColorPrimary" />
+
+            <TextView
+                android:id="@+id/iconChevron"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="&#9658;"
+                android:textSize="14sp"
+                android:textColor="?android:textColorSecondary" />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider" />
+
+        <!-- Icon content -->
+        <LinearLayout
+            android:id="@+id/iconContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:paddingTop="12dp"
+            android:paddingBottom="8dp">
+
+            <!-- Live icon preview -->
+            <ImageView
+                android:id="@+id/iconPreview"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="16dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="Icon preview" />
+
+            <!-- Hue -->
+            <TextView
+                android:id="@+id/hueLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Hue: 0°"
+                android:textSize="12sp"
+                android:textColor="?android:textColorSecondary" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/hueSlider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:valueFrom="-180"
+                android:valueTo="180"
+                android:stepSize="1"
+                android:value="0" />
+
+            <!-- Saturation -->
+            <TextView
+                android:id="@+id/saturationLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Saturation: 0"
+                android:textSize="12sp"
+                android:textColor="?android:textColorSecondary" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/saturationSlider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:valueFrom="-100"
+                android:valueTo="100"
+                android:stepSize="1"
+                android:value="0" />
+
+            <!-- Contrast -->
+            <TextView
+                android:id="@+id/contrastLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Contrast: 0"
+                android:textSize="12sp"
+                android:textColor="?android:textColorSecondary" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/contrastSlider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:valueFrom="-100"
+                android:valueTo="100"
+                android:stepSize="1"
+                android:value="0" />
+
+        </LinearLayout>
+
         <!-- After cloning action -->
         <TextView
             android:layout_width="match_parent"

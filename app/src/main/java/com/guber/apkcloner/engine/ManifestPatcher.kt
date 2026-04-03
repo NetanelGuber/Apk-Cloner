@@ -27,12 +27,17 @@ class ManifestPatcher {
 		data class ManifestPatchResult(
 			val bytes: ByteArray,
 			val labelResourceId: Int?,
-			val originalApplicationClass: String? = null
+			val originalApplicationClass: String? = null,
+			val iconResourceId: Int? = null,
+			val roundIconResourceId: Int? = null
 		)
 	}
 
 	// Captures the resource ID of android:label when it is a reference (BUG-5)
 	private var capturedLabelResId: Int? = null
+	// Captures android:icon and android:roundIcon resource IDs for icon patching
+	private var capturedIconResId: Int? = null
+	private var capturedRoundIconResId: Int? = null
 	// Captures the original Application class name before it is replaced by the shim
 	private var capturedAppClass: String? = null
 
@@ -47,6 +52,8 @@ class ManifestPatcher {
 		injectPackageShim: Boolean = false
 	): ManifestPatchResult {
 		capturedLabelResId = null
+		capturedIconResId = null
+		capturedRoundIconResId = null
 		capturedAppClass = null
 		val axml = Axml()
 		val reader = AxmlReader(manifestBytes)
@@ -58,7 +65,7 @@ class ManifestPatcher {
 
 		val writer = AxmlWriter()
 		axml.accept(writer)
-		return ManifestPatchResult(writer.toByteArray(), capturedLabelResId, capturedAppClass)
+		return ManifestPatchResult(writer.toByteArray(), capturedLabelResId, capturedAppClass, capturedIconResId, capturedRoundIconResId)
 	}
 
 	/**
@@ -146,6 +153,15 @@ class ManifestPatcher {
 					attr.value = authorities
 						.split(";")
 						.joinToString(";") { it.replaceBounded(oldPkg, newPkg) }
+				}
+
+				// <application android:icon="..."> / android:roundIcon — capture resource IDs
+				tagName == "application" && attrName == "icon" -> {
+					capturedIconResId = attr.value as? Int
+				}
+
+				tagName == "application" && attrName == "roundIcon" -> {
+					capturedRoundIconResId = attr.value as? Int
 				}
 
 				// <application android:label="..."> — always intercept this branch

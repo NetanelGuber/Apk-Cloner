@@ -3,6 +3,9 @@ package com.guber.apkcloner.ui
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -10,6 +13,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.TextView
@@ -23,6 +27,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.TextInputLayout
 import com.guber.apkcloner.R
 import com.guber.apkcloner.databinding.ActivityMainBinding
@@ -35,6 +40,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.activity.result.contract.ActivityResultContracts
 import java.io.File
+import kotlin.math.cos
+import kotlin.math.sin
 
 private const val DEFAULT_SAVE_LOCATION_LABEL = "Downloads/APK Cloner (default)"
 
@@ -345,6 +352,18 @@ class MainActivity : AppCompatActivity() {
 		val manifestContent = dialogView.findViewById<LinearLayout>(R.id.manifestContent)
 		val manifestChevron = dialogView.findViewById<TextView>(R.id.manifestChevron)
 
+		// Icon section
+		val iconHeader = dialogView.findViewById<LinearLayout>(R.id.iconHeader)
+		val iconContent = dialogView.findViewById<LinearLayout>(R.id.iconContent)
+		val iconChevron = dialogView.findViewById<TextView>(R.id.iconChevron)
+		val iconPreview = dialogView.findViewById<ImageView>(R.id.iconPreview)
+		val hueSlider = dialogView.findViewById<Slider>(R.id.hueSlider)
+		val saturationSlider = dialogView.findViewById<Slider>(R.id.saturationSlider)
+		val contrastSlider = dialogView.findViewById<Slider>(R.id.contrastSlider)
+		val hueLabel = dialogView.findViewById<TextView>(R.id.hueLabel)
+		val saturationLabel = dialogView.findViewById<TextView>(R.id.saturationLabel)
+		val contrastLabel = dialogView.findViewById<TextView>(R.id.contrastLabel)
+
 		// Reset save-location state for this fresh dialog
 		pendingSaveUri = null
 		pendingSaveLocationView = saveLocationText
@@ -360,6 +379,46 @@ class MainActivity : AppCompatActivity() {
 			manifestContent.visibility = if (expanded) View.GONE else View.VISIBLE
 			manifestChevron.text = if (expanded) "▸" else "▾"
 		}
+
+		// ── Icon section ──────────────────────────────────────────────────────
+
+		// Load the app icon for the preview
+		val originalIcon: Drawable? = loadAppIcon(packageName, sourceApkPaths)
+		iconPreview.setImageDrawable(originalIcon)
+
+		iconHeader.setOnClickListener {
+			val expanded = iconContent.visibility == View.VISIBLE
+			iconContent.visibility = if (expanded) View.GONE else View.VISIBLE
+			iconChevron.text = if (expanded) "▸" else "▾"
+		}
+
+		/** Redraws the preview ImageView with the current slider values applied. */
+		fun refreshIconPreview() {
+			val hue = hueSlider.value
+			val sat = saturationSlider.value / 100f
+			val con = contrastSlider.value / 100f
+
+			hueLabel.text = "Hue: ${hue.toInt()}°"
+			saturationLabel.text = "Saturation: ${saturationSlider.value.toInt()}"
+			contrastLabel.text = "Contrast: ${contrastSlider.value.toInt()}"
+
+			if (originalIcon == null) return
+
+			if (hue == 0f && sat == 0f && con == 0f) {
+				iconPreview.colorFilter = null
+				iconPreview.setImageDrawable(originalIcon)
+				return
+			}
+
+			iconPreview.colorFilter = buildIconColorFilter(hue, sat, con)
+		}
+
+		val sliderListener = Slider.OnChangeListener { _, _, _ -> refreshIconPreview() }
+		hueSlider.addOnChangeListener(sliderListener)
+		saturationSlider.addOnChangeListener(sliderListener)
+		contrastSlider.addOnChangeListener(sliderListener)
+
+		// ── Rest of dialog ────────────────────────────────────────────────────
 
 		// Show/hide the save-location row based on whether a save option is selected
 		actionRadioGroup.setOnCheckedChangeListener { _, checkedId ->
@@ -427,7 +486,10 @@ class MainActivity : AppCompatActivity() {
 					sourceApkPaths = sourceApkPaths,
 					saveToStorage = saveToStorage,
 					installAfterBuild = installAfterBuild,
-					saveLocationUri = pendingSaveUri?.toString()
+					saveLocationUri = pendingSaveUri?.toString(),
+					iconHue = hueSlider.value,
+					iconSaturation = saturationSlider.value / 100f,
+					iconContrast = contrastSlider.value / 100f
 				)
 				startCloning(settings)
 			}
@@ -442,6 +504,65 @@ class MainActivity : AppCompatActivity() {
 				}
 			}
 			.show()
+	}
+
+	/** Loads the launcher icon for an installed package or the first path in sourceApkPaths. */
+	private fun loadAppIcon(packageName: String, sourceApkPaths: List<String>?): Drawable? {
+		return try {
+			if (sourceApkPaths != null) {
+				@Suppress("DEPRECATION")
+				val info = packageManager.getPackageArchiveInfo(sourceApkPaths[0], 0)
+				info?.applicationInfo?.apply {
+					sourceDir = sourceApkPaths[0]
+					publicSourceDir = sourceApkPaths[0]
+				}?.loadIcon(packageManager)
+			} else {
+				packageManager.getApplicationIcon(packageName)
+			}
+		} catch (_: Exception) { null }
+	}
+
+	/**
+	 * Builds a ColorMatrixColorFilter combining hue-rotation, saturation delta,
+	 * and contrast delta — mirrors the logic in IconPatcher so the preview matches
+	 * the actual patched icon.
+	 */
+	private fun buildIconColorFilter(hue: Float, saturation: Float, contrast: Float): ColorMatrixColorFilter {
+		val result = ColorMatrix()
+
+		if (hue != 0f) {
+			val rad = Math.toRadians(hue.toDouble())
+			val c = cos(rad).toFloat()
+			val s = sin(rad).toFloat()
+			val lr = 0.213f; val lg = 0.715f; val lb = 0.072f
+			val hueValues = floatArrayOf(
+				lr + c * (1f - lr) + s * (-lr),    lg + c * (-lg) + s * (-lg),        lb + c * (-lb) + s * (1f - lb), 0f, 0f,
+				lr + c * (-lr) + s * (0.143f),      lg + c * (1f - lg) + s * (0.140f), lb + c * (-lb) + s * (-0.283f), 0f, 0f,
+				lr + c * (-lr) + s * (-(1f - lr)),  lg + c * (-lg) + s * (lg),         lb + c * (1f - lb) + s * (lb),  0f, 0f,
+				0f, 0f, 0f, 1f, 0f
+			)
+			result.postConcat(ColorMatrix(hueValues))
+		}
+
+		if (saturation != 0f) {
+			val sat = ColorMatrix()
+			sat.setSaturation(1f + saturation)
+			result.postConcat(sat)
+		}
+
+		if (contrast != 0f) {
+			val scale = 1f + contrast
+			val translate = (-0.5f * scale + 0.5f) * 255f
+			val contrastValues = floatArrayOf(
+				scale, 0f,    0f,    0f, translate,
+				0f,    scale, 0f,    0f, translate,
+				0f,    0f,    scale, 0f, translate,
+				0f,    0f,    0f,    1f, 0f
+			)
+			result.postConcat(ColorMatrix(contrastValues))
+		}
+
+		return ColorMatrixColorFilter(result)
 	}
 
 	private fun generateUniquePackageName(source: String): String {

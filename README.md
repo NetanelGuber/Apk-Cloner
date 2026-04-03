@@ -2,6 +2,8 @@
 
 Android tool that clones installed apps (or imported APK/APKM/XAPK files) into independently-runnable copies with a different package name — no root required.
 
+**Version:** 0.3.0 · **Min SDK:** 21 (Android 5.0) · **Target SDK:** 28
+
 ---
 
 ## Features
@@ -14,6 +16,7 @@ Android tool that clones installed apps (or imported APK/APKM/XAPK files) into i
 - **Package Name Shim** — overrides `getPackageName()` at runtime for apps that cache their package name
 - **Native lib patching** — binary C-string replacement in `.so` files
 - **SDK override** — lower min/target SDK to bypass API restrictions
+- **Icon color customisation** — adjust hue, saturation, and contrast of the cloned app's launcher icon; live preview in the clone dialog
 - Save output APK/ZIP to storage or install directly via `PackageInstaller`
 - Dark mode support
 
@@ -25,6 +28,7 @@ Source APK
     ├─ Extract base + split APKs
     ├─ Patch AndroidManifest.xml  (binary AXML)
     ├─ Patch resources.arsc       (binary ARSC)
+    ├─ Patch icon colors          (bitmaps + vector XMLs + ARSC color entries)
     ├─ DEX work                   (deep clone / dual-DEX / pkg shim)
     ├─ Patch res/*.xml            (binary AXML)
     ├─ Patch assets/              (text files)
@@ -36,6 +40,18 @@ Source APK
          │
          └─ Install via PackageInstaller or save to Downloads
 ```
+
+### Icon Color Patching
+
+Three complementary layers ensure full coverage across all icon styles:
+
+| Layer | Handles |
+|---|---|
+| `IconPatcher` | PNG / WebP bitmap mipmaps |
+| `VectorColorPatcher` | Inline ARGB values in VectorDrawable binary XML |
+| `ResourcePatcher.patchIconLayerColors` | `@color/` resource entries in `resources.arsc` (simple colors and `ColorStateList`) |
+
+All three layers apply the same BT.601 luminance-preserving hue-rotation matrix so that bitmap and vector portions of an adaptive icon shift identically and match the live preview.
 
 ## Building
 
@@ -71,10 +87,12 @@ app/src/main/java/com/guber/apkcloner/
 │   ├── ApkExtractor.kt         # Copies APKs from installed app
 │   ├── FileApkParser.kt        # Parses .apk / .apkm / .xapk from SAF URI
 │   ├── ManifestPatcher.kt      # Binary AXML manifest patching
-│   ├── ResourcePatcher.kt      # ARSC resource patching
+│   ├── ResourcePatcher.kt      # ARSC resource patching + icon color patching
 │   ├── DexPatcher.kt           # dexlib2-based DEX bytecode patching
 │   ├── DualDexShimGenerator.kt # Generates shim DEX for dual-DEX mode
 │   ├── PackageNameShimGenerator.kt  # Overrides getPackageName() at runtime
+│   ├── IconPatcher.kt          # Hue/saturation/contrast on PNG/WebP icon bitmaps
+│   ├── VectorColorPatcher.kt   # Hue/saturation/contrast on VectorDrawable binary XML
 │   ├── XmlResourcePatcher.kt   # Patches res/*.xml binary files
 │   ├── AssetsPatcher.kt        # Patches text files in assets/
 │   ├── MetadataPatcher.kt      # Patches META-INF/ files

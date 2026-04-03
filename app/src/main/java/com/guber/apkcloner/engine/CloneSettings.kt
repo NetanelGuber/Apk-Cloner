@@ -15,7 +15,10 @@ data class CloneSettings(
 	val sourceApkPaths: List<String>? = null,
 	val saveToStorage: Boolean = false,
 	val installAfterBuild: Boolean = true,
-	val saveLocationUri: String? = null
+	val saveLocationUri: String? = null,
+	val iconHue: Float = 0f,        // degrees: -180..+180
+	val iconSaturation: Float = 0f, // -1..+1 (0 = unchanged)
+	val iconContrast: Float = 0f    // -1..+1 (0 = unchanged)
 ) : Serializable {
 
 	companion object {
