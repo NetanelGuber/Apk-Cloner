@@ -4,6 +4,13 @@ All notable changes to APK Cloner are documented here.
 
 ---
 
+## [0.4.5] - 2026-04-07
+
+### Changed
+- Update detection now uses **version name comparison only**. The previous two-step logic (check `versionCode` first, fall back to version name when it didn't increase) is replaced by a single left-to-right segment-by-segment version name comparison, which is consistent across all apps regardless of how their `versionCode` is managed.
+
+---
+
 ## [0.4.4] - 2026-04-07
 
 ### Fixed
@@ -11,7 +18,7 @@ All notable changes to APK Cloner are documented here.
 
 ---
 
-## [0.4.3] - 2026-04-07
+## [0.4.3] - 2026-04-06
 
 ### Fixed
 

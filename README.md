@@ -2,7 +2,7 @@
 
 Android tool that clones installed apps (or imported APK/APKM/XAPK files) into independently-runnable copies with a different package name — no root required.
 
-**Version:** 0.4.4 · **Min SDK:** 21 (Android 5.0) · **Target SDK:** 28
+**Version:** 0.4.5 · **Min SDK:** 21 (Android 5.0) · **Target SDK:** 28
 
 ---
 
@@ -21,10 +21,10 @@ Android tool that clones installed apps (or imported APK/APKM/XAPK files) into i
 - Saved `.apkm` bundles include `info.json` metadata and `icon.png` so file managers display the app icon
 - Dark mode support
 
-### Clone Management (v0.4.4)
+### Clone Management (v0.4.5)
 
 - **Clones tab** — two-tab layout ("All Apps" / "Clones") for instant access to cloned apps without scrolling
-- **Update detection** — on startup each clone is compared against its original app's version; an UPDATE button appears inline when a newer version is available
+- **Update detection** — on startup each clone's version name is compared segment-by-segment against its original app's version name; an UPDATE button appears inline when a newer version is available
 - **One-tap update** — tapping UPDATE reopens the clone dialog with every setting from the original clone pre-filled (icon adjustments, DEX strategy, SDK overrides, custom package name, etc.) so the update uses identical settings automatically
 - **Persistent clone settings** — all clone configuration is saved to internal storage per clone and recalled whenever an update is triggered
 - **In-app self-update** — on Wi-Fi, the app checks [GitHub Releases](https://github.com/NetanelGuber/Apk-Cloner/releases) on startup; if a newer version is available a dialog shows the changelog with options to install the update or skip it until the next release

@@ -266,21 +266,10 @@ class MainActivity : AppCompatActivity() {
 					val saved = repo.load(app.packageName)
 					if (saved != null) {
 						try {
-							val originalCode = getVersionCode(saved.sourcePackageName)
-							val cloneCode = getVersionCode(app.packageName)
-							// Fast path: versionCode clearly increased
-							val updateAvailable = if (originalCode > cloneCode) {
-								true
-							} else {
-								// versionCode didn't increase — fall back to versionName comparison.
-								// Needed for apps (e.g. Claude) whose build-number segment can
-								// decrease across releases ("1.260420.20" vs "1.260330.27"):
-								// versionCode=20 < versionCode=27 but date 260420 > 260330.
-								compareVersionNames(
-									getVersionName(saved.sourcePackageName),
-									getVersionName(app.packageName)
-								) > 0
-							}
+							val updateAvailable = compareVersionNames(
+								getVersionName(saved.sourcePackageName),
+								getVersionName(app.packageName)
+							) > 0
 							app.copy(updateAvailable = updateAvailable)
 						} catch (_: Exception) { app }
 					} else app
@@ -297,15 +286,6 @@ class MainActivity : AppCompatActivity() {
 					binding.recyclerView.visibility = View.VISIBLE
 				}
 			}
-		}
-	}
-
-	private fun getVersionCode(packageName: String): Long {
-		return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-			packageManager.getPackageInfo(packageName, 0).longVersionCode
-		} else {
-			@Suppress("DEPRECATION")
-			packageManager.getPackageInfo(packageName, 0).versionCode.toLong()
 		}
 	}
 
