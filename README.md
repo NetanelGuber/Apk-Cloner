@@ -2,7 +2,7 @@
 
 Android tool that clones installed apps (or imported APK/APKM/XAPK files) into independently-runnable copies with a different package name — no root required.
 
-**Version:** 0.4.2 · **Min SDK:** 21 (Android 5.0) · **Target SDK:** 28
+**Version:** 0.4.3 · **Min SDK:** 21 (Android 5.0) · **Target SDK:** 28
 
 ---
 
@@ -21,7 +21,7 @@ Android tool that clones installed apps (or imported APK/APKM/XAPK files) into i
 - Saved `.apkm` bundles include `info.json` metadata and `icon.png` so file managers display the app icon
 - Dark mode support
 
-### Clone Management (v0.4.0)
+### Clone Management (v0.4.3)
 
 - **Clones tab** — two-tab layout ("All Apps" / "Clones") for instant access to cloned apps without scrolling
 - **Update detection** — on startup each clone is compared against its original app's version; an UPDATE button appears inline when a newer version is available
