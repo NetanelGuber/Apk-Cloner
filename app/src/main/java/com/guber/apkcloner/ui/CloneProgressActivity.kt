@@ -59,7 +59,7 @@ class CloneProgressActivity : AppCompatActivity() {
 
 		viewModel.progress.observe(this) { progress ->
 			binding.progressBar.progress = progress
-			if (progress >= 93) installStarted = true
+			if (progress >= 93 && settings.installAfterBuild) installStarted = true
 		}
 
 		viewModel.error.observe(this) { error ->

@@ -79,7 +79,7 @@ class NativeLibPatcher(
 
 			// 4. Write replacement if it fits within the space up to (and including) the null.
 			val totalSpace = nullPos - pos  // slots from pos through the null terminator
-			if (new.size <= totalSpace) {
+			if (new.size < totalSpace) {
 				System.arraycopy(new, 0, data, pos, new.size)
 				// Zero out everything from end-of-new-string to (and including) the null,
 				// ensuring the new string is properly terminated and no old bytes remain.
