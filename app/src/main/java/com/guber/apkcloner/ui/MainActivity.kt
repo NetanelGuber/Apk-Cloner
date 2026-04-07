@@ -266,9 +266,22 @@ class MainActivity : AppCompatActivity() {
 					val saved = repo.load(app.packageName)
 					if (saved != null) {
 						try {
-							val originalVer = getVersionCode(saved.sourcePackageName)
-							val cloneVer = getVersionCode(app.packageName)
-							app.copy(updateAvailable = originalVer > cloneVer)
+							val originalCode = getVersionCode(saved.sourcePackageName)
+							val cloneCode = getVersionCode(app.packageName)
+							// Fast path: versionCode clearly increased
+							val updateAvailable = if (originalCode > cloneCode) {
+								true
+							} else {
+								// versionCode didn't increase — fall back to versionName comparison.
+								// Needed for apps (e.g. Claude) whose build-number segment can
+								// decrease across releases ("1.260420.20" vs "1.260330.27"):
+								// versionCode=20 < versionCode=27 but date 260420 > 260330.
+								compareVersionNames(
+									getVersionName(saved.sourcePackageName),
+									getVersionName(app.packageName)
+								) > 0
+							}
+							app.copy(updateAvailable = updateAvailable)
 						} catch (_: Exception) { app }
 					} else app
 				} else app
@@ -294,6 +307,30 @@ class MainActivity : AppCompatActivity() {
 			@Suppress("DEPRECATION")
 			packageManager.getPackageInfo(packageName, 0).versionCode.toLong()
 		}
+	}
+
+	private fun getVersionName(packageName: String): String {
+		return try {
+			packageManager.getPackageInfo(packageName, 0).versionName ?: ""
+		} catch (_: Exception) { "" }
+	}
+
+	/**
+	 * Compares two version name strings segment-by-segment numerically.
+	 * e.g. "1.260420.20" > "1.260330.27" because segment 1: 260420 > 260330.
+	 * Returns positive if [a] is newer, negative if older, 0 if equal.
+	 */
+	private fun compareVersionNames(a: String, b: String): Int {
+		val partsA = a.split(".")
+		val partsB = b.split(".")
+		val len = maxOf(partsA.size, partsB.size)
+		for (i in 0 until len) {
+			val segA = partsA.getOrNull(i)?.toLongOrNull() ?: 0L
+			val segB = partsB.getOrNull(i)?.toLongOrNull() ?: 0L
+			val cmp = segA.compareTo(segB)
+			if (cmp != 0) return cmp
+		}
+		return 0
 	}
 
 	private fun onAppSelected(appInfo: PackageUtils.AppInfo) {

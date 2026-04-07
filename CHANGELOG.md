@@ -4,6 +4,22 @@ All notable changes to APK Cloner are documented here.
 
 ---
 
+## [0.4.4] - 2026-04-07
+
+### Fixed
+- Update detection now correctly identifies newer versions for apps that use CalVer-style version names where the build-number suffix can decrease across releases (e.g. `1.260420.20` vs `1.260330.27`). The check now falls back to a left-to-right segment-by-segment version name comparison when `versionCode` alone does not indicate an update.
+
+---
+
+## [0.4.3] - 2026-04-07
+
+### Fixed
+
+- Fixed native lib patcher as it could sometimes cause data corruption to file if it is exactly 1 byte longer than old package name.
+- Fixed UI saying installation is in progress after pressing cancel on a save only clone.
+
+---
+
 ## [0.4.2] - 2026-04-03
 
 ### Fixed
