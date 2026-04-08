@@ -4,6 +4,16 @@ All notable changes to APK Cloner are documented here.
 
 ---
 
+## [0.4.6] - 2026-04-08
+
+### Fixed
+- Fixed signed integer overflow in `ZipAligner` for ZIP entries larger than 2 GB — `compressedSize`, `uncompressedSize`, and `crc` are now parsed as unsigned 32-bit values (masked to `Long`), preventing negative sizes from silently skipping file data during cloning.
+- Fixed `ZipAligner` alignment padding corrupting the ZIP Extra Field structure — padding is now emitted as a spec-compliant `0xD935` block instead of raw zero bytes, which caused `ZipFormatException` failures in strict parsers like `apksig` and Play Protect.
+- Fixed `replaceBounded` rejecting the Java type descriptor prefix `L` as a word boundary — Deep Clone now correctly rewrites package references in strings like `Lcom/original/MyClass;` instead of silently skipping them.
+- Fixed potential `BufferOverflowException` in `ZipAligner` when the Central Directory filename is longer than the Local File Header filename — the buffer and length field now use the Central Directory filename (the authoritative source) consistently.
+
+---
+
 ## [0.4.5] - 2026-04-07
 
 ### Changed

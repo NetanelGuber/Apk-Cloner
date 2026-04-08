@@ -66,7 +66,7 @@ class ZipAligner {
 				val versionMadeBy: Short, val versionNeeded: Short,
 				val flags: Short, val compression: Short,
 				val modTime: Short, val modDate: Short,
-				val crc: Int, val compressedSize: Int, val uncompressedSize: Int,
+				val crc: Long, val compressedSize: Long, val uncompressedSize: Long,
 				val diskStart: Short, val internalAttrs: Short, val externalAttrs: Int,
 				val localHeaderOffset: Int,
 				val fileName: ByteArray, val extra: ByteArray, val comment: ByteArray
@@ -78,8 +78,9 @@ class ZipAligner {
 				val versionMadeBy    = cdBuf.short;  val versionNeeded  = cdBuf.short
 				val flags            = cdBuf.short;  val compression    = cdBuf.short
 				val modTime          = cdBuf.short;  val modDate        = cdBuf.short
-				val crc              = cdBuf.int;    val compressedSize = cdBuf.int
-				val uncompressedSize = cdBuf.int
+				val crc              = cdBuf.int.toLong() and 0xFFFFFFFFL
+				val compressedSize   = cdBuf.int.toLong() and 0xFFFFFFFFL
+				val uncompressedSize = cdBuf.int.toLong() and 0xFFFFFFFFL
 				val fnLen            = cdBuf.short.toInt() and 0xFFFF
 				val extraLen         = cdBuf.short.toInt() and 0xFFFF
 				val cmtLen           = cdBuf.short.toInt() and 0xFFFF
@@ -126,14 +127,30 @@ class ZipAligner {
 
 					newOffsets[idx] = out.count.toInt()
 
-					// Calculate alignment padding for STORED (uncompressed) entries
+					// Calculate alignment padding for STORED (uncompressed) entries.
+					// Padding is injected as a spec-compliant Extra Field block:
+					//   [Header ID: 0xD935 (2 bytes)] [Data Size (2 bytes)] [Zero-fill payload]
+					// The 4-byte block header is included in the alignment arithmetic.
 					val newExtra = if (lhCompression == 0) {
 						val align = alignment(String(cd.fileName, Charsets.UTF_8))
-						val dataStart = (out.count + 30L + fnLen + lhExtraLen).toInt()
-						val mod = dataStart % align
-						val padding = if (mod == 0) 0 else align - mod
-						if (padding == 0) lhExtra
-						else ByteArray(lhExtraLen + padding).also { lhExtra.copyInto(it) }
+						// Account for the 4-byte extra-field block header when computing where data starts
+						val dataStartWithHeader = (out.count + 30L + cd.fileName.size + lhExtraLen + 4).toInt()
+						val mod = dataStartWithHeader % align
+						val payloadSize = if (mod == 0) 0 else align - mod
+						if (payloadSize == 0 && (out.count + 30L + cd.fileName.size + lhExtraLen).toInt() % align == 0) {
+							// Already aligned without any padding block
+							lhExtra
+						} else {
+							// Build a spec-compliant padding extra-field block (Header ID 0xD935)
+							val block = ByteBuffer.allocate(4 + payloadSize).order(ByteOrder.LITTLE_ENDIAN)
+							block.putShort(0xD935.toShort())  // Android ZIP alignment padding header ID
+							block.putShort(payloadSize.toShort())
+							// payload is already zero-filled by ByteBuffer.allocate
+							ByteArray(lhExtraLen + 4 + payloadSize).also {
+								lhExtra.copyInto(it)
+								block.array().copyInto(it, destinationOffset = lhExtraLen)
+							}
+						}
 					} else {
 						lhExtra
 					}
@@ -141,17 +158,17 @@ class ZipAligner {
 					// Write local file header
 					// Clear data-descriptor flag (bit 3); sizes/crc come from CD (authoritative)
 					val cleanFlags = (lhFlags and 0xFFF7).toShort()
-					val lh = ByteBuffer.allocate(30 + fnLen + newExtra.size).order(ByteOrder.LITTLE_ENDIAN)
+					val lh = ByteBuffer.allocate(30 + cd.fileName.size + newExtra.size).order(ByteOrder.LITTLE_ENDIAN)
 					lh.putInt(0x04034b50)
 					lh.putShort(lhVersionNeeded)
 					lh.putShort(cleanFlags)
 					lh.putShort(lhCompression.toShort())
 					lh.putShort(lhModTime)
 					lh.putShort(lhModDate)
-					lh.putInt(cd.crc)
-					lh.putInt(cd.compressedSize)
-					lh.putInt(cd.uncompressedSize)
-					lh.putShort(fnLen.toShort())
+					lh.putInt(cd.crc.toInt())
+					lh.putInt(cd.compressedSize.toInt())
+					lh.putInt(cd.uncompressedSize.toInt())
+					lh.putShort(cd.fileName.size.toShort())
 					lh.putShort(newExtra.size.toShort())
 					lh.put(cd.fileName)
 					lh.put(newExtra)
@@ -162,7 +179,7 @@ class ZipAligner {
 					raf.seek(dataAbsOff)
 					var remaining = cd.compressedSize
 					while (remaining > 0) {
-						val toRead = minOf(remaining, copyBuf.size)
+						val toRead = minOf(remaining, copyBuf.size.toLong()).toInt()
 						raf.readFully(copyBuf, 0, toRead)
 						out.write(copyBuf, 0, toRead)
 						remaining -= toRead
@@ -180,9 +197,9 @@ class ZipAligner {
 					entry.putShort(cd.versionMadeBy); entry.putShort(cd.versionNeeded)
 					entry.putShort((cd.flags.toInt() and 0xFFF7).toShort()); entry.putShort(cd.compression)
 					entry.putShort(cd.modTime);       entry.putShort(cd.modDate)
-					entry.putInt(cd.crc)
-					entry.putInt(cd.compressedSize)
-					entry.putInt(cd.uncompressedSize)
+					entry.putInt(cd.crc.toInt())
+					entry.putInt(cd.compressedSize.toInt())
+					entry.putInt(cd.uncompressedSize.toInt())
 					entry.putShort(cd.fileName.size.toShort())
 					entry.putShort(cd.extra.size.toShort())
 					entry.putShort(cd.comment.size.toShort())

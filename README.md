@@ -2,7 +2,7 @@
 
 Android tool that clones installed apps (or imported APK/APKM/XAPK files) into independently-runnable copies with a different package name — no root required.
 
-**Version:** 0.4.5 · **Min SDK:** 21 (Android 5.0) · **Target SDK:** 28
+**Version:** 0.4.6 · **Min SDK:** 21 (Android 5.0) · **Target SDK:** 28
 
 ---
 

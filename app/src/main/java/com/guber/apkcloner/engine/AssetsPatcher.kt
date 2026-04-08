@@ -46,6 +46,7 @@ internal fun String.replaceBounded(old: String, new: String): String {
 		val beforeChar = getOrNull(idx - 1)
 		val afterChar = getOrNull(afterIdx)
 		val leftOk = beforeChar == null || (!beforeChar.isLetterOrDigit() && beforeChar != '_')
+				|| beforeChar == 'L'  // Allow Java/Android type descriptor prefix (e.g. "Lcom/example/...")
 		val rightOk = afterChar == null || (!afterChar.isLetterOrDigit() && afterChar != '_')
 		if (leftOk && rightOk) {
 			// Boundary check passed — safe to replace
