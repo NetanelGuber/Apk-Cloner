@@ -3,6 +3,84 @@ plugins {
 	id 'org.jetbrains.kotlin.android'
 }
 
+// ── Hook artifact copying ─────────────────────────────────────────────────────
+// Builds :hook-lib (release), then extracts hook.dex and Pine native libs into
+// app/src/main/assets/ so they can be bundled and injected into cloned APKs.
+//
+// This task runs automatically before every :app build via preBuild.dependsOn.
+// Gradle's incremental build skips the :hook-lib assembleRelease step if hook-lib
+// sources haven't changed, so subsequent builds stay fast.
+
+task copyHookArtifacts {
+    group = 'build'
+    description = 'Extracts hook.dex and Pine native libs from :hook-lib into app assets'
+    dependsOn ':hook-lib:assembleRelease'
+
+    def hookBuildDir   = project(':hook-lib').buildDir
+    def releaseApkDir  = new File(hookBuildDir, 'outputs/apk/release')
+    def assetsDir      = file('src/main/assets')
+
+    // Declare inputs/outputs so Gradle can skip this task when nothing changed.
+    // Point only at the release APK output directory — not the whole build tree —
+    // to avoid false implicit-dependency conflicts with debug-variant tasks that
+    // also write under hook-lib/build.
+    inputs.dir releaseApkDir
+    outputs.file new File(assetsDir, 'hook.dex')
+
+    doLast {
+        assetsDir.mkdirs()
+
+        // Locate the release APK produced by :hook-lib:assembleRelease
+        def apkFile = releaseApkDir.listFiles()?.find { it.name.endsWith('.apk') }
+
+        if (apkFile == null) {
+            throw new GradleException(
+                "hook-lib release APK not found in ${releaseApkDir}.\n" +
+                "Run './gradlew :hook-lib:assembleRelease' first.")
+        }
+
+        def apkZip = new java.util.zip.ZipFile(apkFile)
+        try {
+            // ── 1. Extract classes.dex → assets/hook.dex ─────────────────────
+            def dexEntry = apkZip.getEntry('classes.dex')
+            if (dexEntry == null) {
+                throw new GradleException("classes.dex not found in hook-lib APK: ${apkFile}")
+            }
+            def hookDex = new File(assetsDir, 'hook.dex')
+            hookDex.withOutputStream { output ->
+                apkZip.getInputStream(dexEntry).withStream { input -> output << input }
+            }
+            logger.lifecycle(":copyHookArtifacts: hook.dex extracted (${hookDex.length()} bytes)")
+
+            // ── 2. Extract lib/<abi>/libpine.so → assets/libpine/<abi>/libpine.so ──
+            //      Only libpine.so is extracted; other libs (if any) are ignored.
+            def libpineDir = new File(assetsDir, 'libpine')
+            def entries = apkZip.entries()
+            while (entries.hasMoreElements()) {
+                def entry = entries.nextElement()
+                def entryName = entry.name          // e.g. "lib/arm64-v8a/libpine.so"
+                if (!entryName.startsWith('lib/') || !entryName.endsWith('/libpine.so')) continue
+
+                def parts = entryName.split('/')
+                if (parts.length < 3) continue
+                def abi = parts[1]                  // e.g. "arm64-v8a"
+
+                def targetDir  = new File(libpineDir, abi)
+                targetDir.mkdirs()
+                def targetFile = new File(targetDir, 'libpine.so')
+                targetFile.withOutputStream { output ->
+                    apkZip.getInputStream(entry).withStream { input -> output << input }
+                }
+                logger.lifecycle(":copyHookArtifacts: libpine.so extracted for ${abi} (${targetFile.length()} bytes)")
+            }
+        } finally {
+            apkZip.close()
+        }
+    }
+}
+
+preBuild.dependsOn copyHookArtifacts
+
 android {
 	namespace 'com.guber.apkcloner'
 	compileSdk 34
@@ -11,8 +89,8 @@ android {
 		applicationId 'com.guber.apkcloner'
 		minSdk 21
 		targetSdk 28
-		versionCode 20
-		versionName '0.4.6'
+		versionCode 21
+		versionName '0.5.0'
 	}
 
 	buildFeatures {

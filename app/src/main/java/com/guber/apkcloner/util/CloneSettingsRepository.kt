@@ -27,6 +27,7 @@ class CloneSettingsRepository(private val context: Context) {
             put("saveToStorage", settings.saveToStorage)
             put("installAfterBuild", settings.installAfterBuild)
             put("saveLocationUri", settings.saveLocationUri ?: JSONObject.NULL)
+            put("spoofSignatures", settings.spoofSignatures)
         }
         File(dir, "${settings.newPackageName}.json").writeText(json.toString())
     }
@@ -51,7 +52,8 @@ class CloneSettingsRepository(private val context: Context) {
                 iconContrast = json.getDouble("iconContrast").toFloat(),
                 saveToStorage = json.getBoolean("saveToStorage"),
                 installAfterBuild = json.getBoolean("installAfterBuild"),
-                saveLocationUri = if (json.isNull("saveLocationUri")) null else json.getString("saveLocationUri")
+                saveLocationUri = if (json.isNull("saveLocationUri")) null else json.getString("saveLocationUri"),
+                spoofSignatures = json.optBoolean("spoofSignatures", false)
             )
         } catch (_: Exception) {
             null

@@ -11,9 +11,12 @@ dependencyResolutionManagement {
 	repositories {
 		google()
 		mavenCentral()
+		// JitPack — fallback for Pine if not yet on Maven Central
+		maven { url 'https://jitpack.io' }
 	}
 }
 
 rootProject.name = "APKCloner"
 include ':app'
 include ':axml'
+include ':hook-lib'

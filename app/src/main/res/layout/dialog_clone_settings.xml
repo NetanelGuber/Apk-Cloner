@@ -320,9 +320,26 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:layout_marginBottom="8dp"
                 android:layout_marginStart="32dp"
                 android:text="Overrides getPackageName() to return the original package name. Use for games that lose save data after cloning. Warning: may crash apps that use the package name for system lookups (e.g. AndroidX Startup)."
+                android:textSize="12sp"
+                android:textColor="?android:textColorSecondary" />
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/spoofSignaturesCheckbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Spoof signatures"
+                android:checked="false" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="32dp"
+                android:text="Makes the clone report the original app's signing certificate when queried via PackageManager. Use for apps/games that detect re-signing and refuse to run. Requires Android 5.0+."
                 android:textSize="12sp"
                 android:textColor="?android:textColorSecondary" />
 

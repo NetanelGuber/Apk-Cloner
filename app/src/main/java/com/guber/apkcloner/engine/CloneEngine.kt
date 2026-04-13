@@ -82,6 +82,20 @@ class CloneEngine(private val context: Context) {
 			val manifestBytes = extractEntry(workingApk, "AndroidManifest.xml")
 				?: throw IllegalStateException("No AndroidManifest.xml in APK")
 			val patchComponentNames = settings.deepClone || settings.dualDex
+
+			// Capture original signing certificates before we re-sign the clone.
+			// Done here (before manifest patching) so the data is ready to embed.
+			val spoofingManifestData: ManifestPatcher.Companion.SpoofingManifestData? =
+				if (settings.spoofSignatures) {
+					onProgress("Capturing original signatures...", 14)
+					val certData = SignatureCapture.capture(context, settings)
+					ManifestPatcher.Companion.SpoofingManifestData(
+						originalPackageName = settings.sourcePackageName,
+						sigsBase64          = certData.sigsBase64,
+						signingInfoBase64   = certData.signingInfoBase64
+					)
+				} else null
+
 			val manifestResult = ManifestPatcher().patch(
 				manifestBytes,
 				settings.sourcePackageName,
@@ -90,7 +104,8 @@ class CloneEngine(private val context: Context) {
 				patchComponentNames,
 				settings.overrideMinSdk,
 				settings.overrideTargetSdk,
-				injectPackageShim = settings.pkgShim
+				injectPackageShim = settings.pkgShim,
+				spoofingData      = spoofingManifestData
 			)
 			onProgress("Manifest patched", 30)
 
@@ -183,6 +198,8 @@ class CloneEngine(private val context: Context) {
 
 			// ── Step 4: DEX work ─────────────────────────────────────── 65%
 			val extraDexFiles = mutableListOf<ByteArray>()
+			val extraNativeLibs = mutableMapOf<String, ByteArray>()
+
 			if (settings.pkgShim) {
 				onProgress("Generating package name shim...", 52)
 				val pkgShimDex = PackageNameShimGenerator(
@@ -192,6 +209,28 @@ class CloneEngine(private val context: Context) {
 					manifestResult.originalApplicationClass
 				).generate()
 				extraDexFiles.add(pkgShimDex)
+			}
+
+			if (settings.spoofSignatures) {
+				onProgress("Injecting signature hook...", 53)
+				// Inject the pre-compiled hook DEX (contains HookEntryProvider + SignatureSpoofing
+				// + Pine classes — all merged into one DEX by :hook-lib:assembleRelease).
+				val hookDexBytes = context.assets.open("hook.dex").readBytes()
+				extraDexFiles.add(hookDexBytes)
+
+				// Inject Pine native libs into the clone's lib/<abi>/ directories.
+				// We only inject ABIs that already exist in the source APK; for APKs
+				// with no native libs at all we inject all four ABIs we bundle.
+				val sourceAbis = collectAbisFromApk(workingApk)
+				val abisToInject = if (sourceAbis.isEmpty()) ALL_PINE_ABIS else sourceAbis
+				for (abi in abisToInject) {
+					try {
+						val libBytes = context.assets.open("libpine/$abi/libpine.so").readBytes()
+						extraNativeLibs["lib/$abi/libpine.so"] = libBytes
+					} catch (_: Exception) {
+						// This ABI was not bundled in our assets (e.g. x86 build was omitted)
+					}
+				}
 			}
 			when {
 				settings.dualDex -> {
@@ -232,7 +271,7 @@ class CloneEngine(private val context: Context) {
 			ApkAssembler().assemble(
 				workingApk, manifestResult.bytes, finalArsc, unsignedApk,
 				settings.sourcePackageName, settings.newPackageName,
-				settings.patchNativeLibs, extraDexFiles
+				settings.patchNativeLibs, extraDexFiles, extraNativeLibs
 			)
 			val alignedApk = File(workDir, "aligned.apk")
 			ZipAligner().align(unsignedApk, alignedApk)
@@ -473,6 +512,28 @@ class CloneEngine(private val context: Context) {
 			"fillColor", "strokeColor", "color", "tint",
 			"startColor", "endColor", "centerColor", "solidColor"
 		)
+
+		/** All ABI directories for which we bundle a Pine native lib in assets. */
+		private val ALL_PINE_ABIS = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+	}
+
+	/**
+	 * Returns the set of ABI directory names found under `lib/` in the given APK.
+	 * For example {"arm64-v8a", "armeabi-v7a"}.
+	 * Returns an empty set if the APK contains no native library directories.
+	 */
+	private fun collectAbisFromApk(apkFile: File): Set<String> {
+		val abis = mutableSetOf<String>()
+		ZipFile(apkFile).use { zip ->
+			zip.entries().asSequence().forEach { entry ->
+				val name = entry.name
+				if (name.startsWith("lib/") && !entry.isDirectory) {
+					val parts = name.split("/")
+					if (parts.size >= 3) abis.add(parts[1])
+				}
+			}
+		}
+		return abis
 	}
 
 	/**

@@ -428,6 +428,7 @@ class MainActivity : AppCompatActivity() {
 		val patchNativeCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.patchNativeCheckbox)
 		val dualDexCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.dualDexCheckbox)
 		val pkgShimCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.pkgShimCheckbox)
+		val spoofSignaturesCheckbox = dialogView.findViewById<MaterialCheckBox>(R.id.spoofSignaturesCheckbox)
 		val minSdkEditText = dialogView.findViewById<EditText>(R.id.minSdkEditText)
 		val targetSdkEditText = dialogView.findViewById<EditText>(R.id.targetSdkEditText)
 		val customPackageEditText = dialogView.findViewById<EditText>(R.id.customPackageEditText)
@@ -543,6 +544,7 @@ class MainActivity : AppCompatActivity() {
 			dualDexCheckbox.isChecked = savedSettings.dualDex
 			patchNativeCheckbox.isChecked = savedSettings.patchNativeLibs
 			pkgShimCheckbox.isChecked = savedSettings.pkgShim
+			spoofSignaturesCheckbox.isChecked = savedSettings.spoofSignatures
 			minSdkEditText.setText(savedSettings.overrideMinSdk?.toString() ?: "")
 			targetSdkEditText.setText(savedSettings.overrideTargetSdk?.toString() ?: "")
 			customPackageEditText.setText(savedSettings.newPackageName)
@@ -552,7 +554,7 @@ class MainActivity : AppCompatActivity() {
 
 			// Expand sections that have non-default values
 			val hasCompatOptions = savedSettings.deepClone || savedSettings.dualDex ||
-				savedSettings.patchNativeLibs || savedSettings.pkgShim
+				savedSettings.patchNativeLibs || savedSettings.pkgShim || savedSettings.spoofSignatures
 			if (hasCompatOptions) {
 				compatibilityContent.visibility = View.VISIBLE
 				compatibilityChevron.text = "▾"
@@ -629,7 +631,8 @@ class MainActivity : AppCompatActivity() {
 					saveLocationUri = pendingSaveUri?.toString(),
 					iconHue = hueSlider.value,
 					iconSaturation = saturationSlider.value / 100f,
-					iconContrast = contrastSlider.value / 100f
+					iconContrast = contrastSlider.value / 100f,
+					spoofSignatures = spoofSignaturesCheckbox.isChecked
 				)
 
 				// Persist settings so they can be recalled for future updates

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Minimal manifest for the hook-lib build module.
+  This module exists solely to produce a merged DEX (hook.dex) and Pine native libs
+  that are bundled as assets in the :app module and injected into cloned APKs at runtime.
+  It has no activities, no services, and is never installed on a device directly.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application />
+</manifest>

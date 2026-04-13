@@ -2,7 +2,7 @@
 
 Android tool that clones installed apps (or imported APK/APKM/XAPK files) into independently-runnable copies with a different package name — no root required.
 
-**Version:** 0.4.6 · **Min SDK:** 21 (Android 5.0) · **Target SDK:** 28
+**Version:** 0.5.0 · **Min SDK:** 21 (Android 5.0) · **Target SDK:** 28
 
 ---
 
@@ -16,6 +16,7 @@ Android tool that clones installed apps (or imported APK/APKM/XAPK files) into i
 - **Package Name Shim** — overrides `getPackageName()` at runtime for apps that cache their package name
 - **Native lib patching** — binary C-string replacement in `.so` files
 - **SDK override** — lower min/target SDK to bypass API restrictions
+- **Signature spoofing** — hooks `PackageManager.getPackageInfo()` at runtime inside the clone to return the original app's signing certificates, preventing tamper-detection from flagging the re-signed APK (ARM devices, Android 5.0+)
 - **Icon color customisation** — adjust hue, saturation, and contrast of the cloned app's launcher icon; live preview in the clone dialog
 - Save output as `.apk` (single) or `.apkm` bundle (splits) to storage, or install directly via `PackageInstaller`
 - Saved `.apkm` bundles include `info.json` metadata and `icon.png` so file managers display the app icon
@@ -140,7 +141,8 @@ axml/                           # Forked pxb.android AXML/ARSC parser+writer (Ja
 
 ## Limitations
 
-- Apps with certificate pinning will fail to connect to their servers after cloning (the clone has a different signing key)
-- Apps that verify their own package integrity at runtime may crash or refuse to run
+- Apps with certificate pinning will fail to connect to their servers after cloning (the clone has a different signing key — signature spoofing only covers `PackageManager` API checks, not TLS pinning)
+- Apps that verify their own package integrity at runtime may crash or refuse to run — enable **Signature Spoofing** to fix this for apps that use `getPackageInfo()` checks
+- Signature spoofing uses Pine (ARM only) — on x86/x86_64 devices (emulators) the clone will crash if spoofing is enabled
 - System apps and apps with `sharedUserId` cannot be cloned
 - Deep clone is slow on large APKs — DEX patching rewrites every string in every DEX file

@@ -16,6 +16,18 @@ class ManifestPatcher {
 			"service", "receiver", "provider"
 		)
 
+		private const val ANDROID_NS = "http://schemas.android.com/apk/res/android"
+
+		// Well-known android:* attribute resource IDs (from frameworks/base attrs_manifest.xml)
+		private const val RES_NAME        = 0x01010003  // android:name
+		private const val RES_AUTHORITIES = 0x01010018  // android:authorities
+		private const val RES_EXPORTED    = 0x01010010  // android:exported
+		private const val RES_INIT_ORDER  = 0x0101001a  // android:initOrder
+		private const val RES_VALUE       = 0x01010024  // android:value (meta-data)
+
+		/** Class name injected into the clone's manifest as the hook ContentProvider. */
+		const val HOOK_PROVIDER_CLASS = "com.guber.apkcloner.hooks.HookEntryProvider"
+
 		fun extractManifest(apkFile: File): ByteArray {
 			ZipFile(apkFile).use { zip ->
 				val entry = zip.getEntry("AndroidManifest.xml")
@@ -30,6 +42,16 @@ class ManifestPatcher {
 			val originalApplicationClass: String? = null,
 			val iconResourceId: Int? = null,
 			val roundIconResourceId: Int? = null
+		)
+
+		/**
+		 * Data needed to inject signature-spoofing entries into the manifest.
+		 * Produced by [SignatureCapture] and consumed by [ManifestPatcher.patch].
+		 */
+		data class SpoofingManifestData(
+			val originalPackageName: String,
+			val sigsBase64: String,
+			val signingInfoBase64: String?
 		)
 	}
 
@@ -49,7 +71,8 @@ class ManifestPatcher {
 		deepClone: Boolean = false,
 		overrideMinSdk: Int? = null,
 		overrideTargetSdk: Int? = null,
-		injectPackageShim: Boolean = false
+		injectPackageShim: Boolean = false,
+		spoofingData: SpoofingManifestData? = null
 	): ManifestPatchResult {
 		capturedLabelResId = null
 		capturedIconResId = null
@@ -60,12 +83,80 @@ class ManifestPatcher {
 		reader.accept(axml)
 
 		for (node in axml.firsts) {
-			patchNode(node, oldPackageName, newPackageName, cloneLabel, deepClone, injectPackageShim, overrideMinSdk, overrideTargetSdk)
+			patchNode(node, oldPackageName, newPackageName, cloneLabel, deepClone, injectPackageShim, overrideMinSdk, overrideTargetSdk, newPackageName, spoofingData)
 		}
 
 		val writer = AxmlWriter()
 		axml.accept(writer)
 		return ManifestPatchResult(writer.toByteArray(), capturedLabelResId, capturedAppClass, capturedIconResId, capturedRoundIconResId)
+	}
+
+	// ── Signature-spoofing manifest injection ────────────────────────────────
+
+	/**
+	 * Appends a ContentProvider and three meta-data children to the given
+	 * [applicationNode] (which must be the `<application>` Axml.Node).
+	 *
+	 * Injected XML equivalent:
+	 * ```xml
+	 * <provider
+	 *     android:name="com.guber.apkcloner.hooks.HookEntryProvider"
+	 *     android:authorities="<newPkg>.cloner.hook"
+	 *     android:exported="false"
+	 *     android:initOrder="2147483647" />
+	 *
+	 * <meta-data android:name="spoofing.originalPackageName" android:value="<origPkg>" />
+	 * <meta-data android:name="spoofing.originalSignatures"  android:value="<base64>" />
+	 * <meta-data android:name="spoofing.originalSigningInfo" android:value="<base64>" />  <!-- optional -->
+	 * ```
+	 */
+	private fun injectSpoofingNodes(
+		applicationNode: Axml.Node,
+		newPkg: String,
+		data: SpoofingManifestData
+	) {
+		// 1. <provider> — HookEntryProvider
+		val providerNode = Axml.Node()
+		providerNode.ns   = null
+		providerNode.name = "provider"
+		providerNode.attrs.add(makeAttr("name",        RES_NAME,        NodeVisitor.TYPE_STRING,      HOOK_PROVIDER_CLASS))
+		providerNode.attrs.add(makeAttr("authorities", RES_AUTHORITIES, NodeVisitor.TYPE_STRING,      "$newPkg.cloner.hook"))
+		// TYPE_INT_BOOLEAN stores false as 0, true as 0xFFFFFFFF (-1) — use Int, not Boolean
+		providerNode.attrs.add(makeAttr("exported",    RES_EXPORTED,    NodeVisitor.TYPE_INT_BOOLEAN, 0))
+		providerNode.attrs.add(makeAttr("initOrder",   RES_INIT_ORDER,  NodeVisitor.TYPE_FIRST_INT,   Int.MAX_VALUE))
+		applicationNode.children.add(providerNode)
+
+		// 2. <meta-data> — original package name
+		applicationNode.children.add(makeMetaNode("spoofing.originalPackageName", data.originalPackageName))
+
+		// 3. <meta-data> — Parcel-serialised Signature[]
+		applicationNode.children.add(makeMetaNode("spoofing.originalSignatures", data.sigsBase64))
+
+		// 4. <meta-data> — Parcel-serialised SigningInfo (API 28+ only; absent for imported APKs)
+		if (data.signingInfoBase64 != null) {
+			applicationNode.children.add(makeMetaNode("spoofing.originalSigningInfo", data.signingInfoBase64))
+		}
+	}
+
+	/** Creates a `<meta-data android:name=[name] android:value=[value] />` node. */
+	private fun makeMetaNode(name: String, value: String): Axml.Node {
+		val node = Axml.Node()
+		node.ns   = null
+		node.name = "meta-data"
+		node.attrs.add(makeAttr("name",  RES_NAME,  NodeVisitor.TYPE_STRING, name))
+		node.attrs.add(makeAttr("value", RES_VALUE, NodeVisitor.TYPE_STRING, value))
+		return node
+	}
+
+	/** Creates a single [Axml.Node.Attr] with the given properties. */
+	private fun makeAttr(name: String, resourceId: Int, type: Int, value: Any): Axml.Node.Attr {
+		val attr = Axml.Node.Attr()
+		attr.ns         = ANDROID_NS
+		attr.name       = name
+		attr.resourceId = resourceId
+		attr.type       = type
+		attr.value      = value
+		return attr
 	}
 
 	/**
@@ -89,7 +180,9 @@ class ManifestPatcher {
 		deepClone: Boolean,
 		injectPackageShim: Boolean,
 		overrideMinSdk: Int? = null,
-		overrideTargetSdk: Int? = null
+		overrideTargetSdk: Int? = null,
+		rootNewPkg: String = newPkg,
+		spoofingData: SpoofingManifestData? = null
 	) {
 		val tagName = node.name ?: ""
 
@@ -213,9 +306,16 @@ class ManifestPatcher {
 			node.attrs.add(nameAttr)
 		}
 
-		// Recurse into children
+		// Recurse into children (process existing children before we add new ones)
 		for (child in node.children) {
-			patchNode(child, oldPkg, newPkg, cloneLabel, deepClone, injectPackageShim, overrideMinSdk, overrideTargetSdk)
+			patchNode(child, oldPkg, newPkg, cloneLabel, deepClone, injectPackageShim, overrideMinSdk, overrideTargetSdk, rootNewPkg, spoofingData)
+		}
+
+		// Inject the signature-spoofing ContentProvider + meta-data AFTER recursion so
+		// the newly added nodes are not themselves processed by patchNode (which would
+		// mangle the originalPackageName meta-data value and the HookEntryProvider class).
+		if (tagName == "application" && spoofingData != null) {
+			injectSpoofingNodes(node, rootNewPkg, spoofingData)
 		}
 	}
 }

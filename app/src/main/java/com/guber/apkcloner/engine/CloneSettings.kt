@@ -18,7 +18,8 @@ data class CloneSettings(
 	val saveLocationUri: String? = null,
 	val iconHue: Float = 0f,        // degrees: -180..+180
 	val iconSaturation: Float = 0f, // -1..+1 (0 = unchanged)
-	val iconContrast: Float = 0f    // -1..+1 (0 = unchanged)
+	val iconContrast: Float = 0f,   // -1..+1 (0 = unchanged)
+	val spoofSignatures: Boolean = false
 ) : Serializable {
 
 	companion object {

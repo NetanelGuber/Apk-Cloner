@@ -1,0 +1,37 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.guber.apkcloner.hooks'
+    compileSdk 34
+
+    defaultConfig {
+        // Dummy applicationId — this module only exists to produce a merged DEX + native libs.
+        // The resulting hook.dex is extracted and bundled as an asset in :app.
+        applicationId 'com.guber.apkcloner.hooks.build'
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Sign with the debug key so assembleRelease succeeds without a keystore
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    // Pine — non-root ART method hooking library.
+    // Published on Maven Central as top.canyie.pine:core.
+    implementation 'top.canyie.pine:core:0.3.0'
+}

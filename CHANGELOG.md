@@ -4,6 +4,13 @@ All notable changes to APK Cloner are documented here.
 
 ---
 
+## [0.5.0] - 2026-04-13
+
+### Added
+- **Signature spoofing** — new option in the clone dialog that hooks `PackageManager.getPackageInfo()` at runtime inside the clone via Pine, returning the original app's signing certificates instead of the clone's. Prevents tamper-detection code that verifies the APK signature from flagging the re-signed clone. Works on ARM devices (arm64-v8a, armeabi-v7a) running Android 5.0+. Enabling this on x86/x86_64 (emulators) will crash the clone, which is intentional — the user can see the feature is not supported rather than it silently doing nothing.
+
+---
+
 ## [0.4.6] - 2026-04-08
 
 ### Fixed

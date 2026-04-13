@@ -28,7 +28,8 @@ class ApkAssembler {
 		oldPackageName: String? = null,
 		newPackageName: String? = null,
 		patchNativeLibs: Boolean = false,
-		extraDexFiles: List<ByteArray> = emptyList()
+		extraDexFiles: List<ByteArray> = emptyList(),
+		extraNativeLibs: Map<String, ByteArray> = emptyMap()
 	) {
 		if (oldPackageName != null && newPackageName != null) {
 			xmlPatcher = XmlResourcePatcher(oldPackageName, newPackageName)
@@ -113,6 +114,22 @@ class ApkAssembler {
 					dexEntry.crc = calculateCrc32(dexBytes)
 					zout.putNextEntry(dexEntry)
 					zout.write(dexBytes)
+					zout.closeEntry()
+				}
+
+				// Inject extra native libraries (e.g. libpine.so for signature spoofing).
+				// Native libs must be STORED (uncompressed) so Android can memory-map them.
+				// We skip any entry whose name is already present in the source APK to avoid
+				// overwriting a library the app ships itself.
+				for ((entryName, libBytes) in extraNativeLibs) {
+					if (seen.contains(entryName)) continue
+					val libEntry = ZipEntry(entryName)
+					libEntry.method = ZipEntry.STORED
+					libEntry.size = libBytes.size.toLong()
+					libEntry.compressedSize = libBytes.size.toLong()
+					libEntry.crc = calculateCrc32(libBytes)
+					zout.putNextEntry(libEntry)
+					zout.write(libBytes)
 					zout.closeEntry()
 				}
 			}
